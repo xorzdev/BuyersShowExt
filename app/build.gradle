@@ -1,0 +1,118 @@
+apply plugin: 'com.android.application'
+apply plugin: 'org.greenrobot.greendao'
+
+android {
+    compileSdkVersion 27
+    buildToolsVersion "27.0.3"
+
+    defaultConfig {
+        applicationId "me.gavin.ext.mjx"
+        minSdkVersion 17
+        targetSdkVersion 27
+        versionCode 1
+        versionName "1.0"
+        resConfigs "zh" // 只保留中文
+        vectorDrawables.useSupportLibrary = true
+        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        release {
+            storeFile file(STORE_FILE)
+            storePassword STORE_PASSWORD
+            keyAlias KEY_ALIAS
+            keyPassword KEY_PASSWORD
+            v2SigningEnabled true
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
+            minifyEnabled false
+            shrinkResources false
+            zipAlignEnabled false
+            // applicationIdSuffix ".debug"
+            versionNameSuffix ".debug"
+            buildConfigField "boolean", "LOG_DEBUG", "true"
+            buildConfigField "boolean", "API_DEBUG", "true"
+            resValue "string", "app_name", "BuyersShowExt"
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+        release {
+            debuggable false
+            minifyEnabled true
+            shrinkResources true
+            zipAlignEnabled true
+            // applicationIdSuffix ".release"
+            versionNameSuffix ".release"
+            buildConfigField "boolean", "LOG_DEBUG", "false"
+            buildConfigField "boolean", "API_DEBUG", "false"
+            // manifestPlaceholders = [
+            //         fileProvider: ".release"
+            // ]
+            resValue "string", "app_name", "BuyersShowExt"
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+
+    dataBinding {
+        enabled = true
+    }
+
+    greendao {
+        schemaVersion 1
+        daoPackage 'me.gavin.db.dao'
+        targetGenDir 'src/main/java'
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
+    configurations.all {
+        resolutionStrategy.force 'com.google.code.findbugs:jsr305:1.3.9'
+    }
+}
+
+dependencies {
+    implementation fileTree(include: ['*.jar'], dir: 'libs')
+    testImplementation 'junit:junit:4.12'
+    androidTestImplementation 'com.android.support.test:runner:1.0.1'
+    androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.1'
+
+    implementation 'com.android.support:appcompat-v7:27.1.0'
+    implementation 'com.android.support:design:27.1.0'
+    implementation 'com.android.support:cardview-v7:27.1.0'
+    implementation 'com.android.support:recyclerview-v7:27.1.0'
+    implementation 'com.android.support.constraint:constraint-layout:1.0.2'
+
+    implementation 'io.reactivex.rxjava2:rxjava:2.1.7'
+    implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'
+    implementation 'com.squareup.retrofit2:adapter-rxjava2:2.3.0'
+
+    implementation 'com.google.code.gson:gson:2.8.1'
+
+    implementation 'com.squareup.okhttp3:okhttp:3.10.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:3.10.0'
+
+    implementation 'com.google.dagger:dagger:2.11'
+    annotationProcessor 'com.google.dagger:dagger-compiler:2.11'
+
+    implementation 'com.github.bumptech.glide:glide:3.8.0'
+    implementation 'com.github.bumptech.glide:okhttp3-integration:1.5.0@aar'
+
+    implementation 'org.greenrobot:greendao:3.2.2'
+
+    implementation 'org.jsoup:jsoup:1.11.2'
+
+    implementation 'com.github.franmontiel:PersistentCookieJar:v1.0.1'
+
+    implementation 'com.just.agentweb:agentweb:4.0.2'
+}
