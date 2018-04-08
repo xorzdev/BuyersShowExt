@@ -5,6 +5,7 @@ import com.google.gson.JsonArray;
 import io.reactivex.Observable;
 import me.gavin.app.Account;
 import me.gavin.app.ModelResult;
+import me.gavin.app.Task;
 import okhttp3.ResponseBody;
 
 /**
@@ -38,6 +39,10 @@ public class DataLayer {
         void insertOrReplace(Account account);
 
         Observable<ModelResult> getWaiting(String cookie);
+
+        void addTask(Task task);
+
+        Observable<Boolean> task(String cookie, long id, String token, String... ids);
     }
 
     public interface SettingService {

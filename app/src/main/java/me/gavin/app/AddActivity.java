@@ -41,9 +41,31 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
         }
 
         mAdapter = new BindingAdapter<>(this, mList, R.layout.item_model);
+        mAdapter.setOnItemClickListener(i -> {
+            Model t = mList.get(i);
+            Task task = new Task();
+            task.setId(t.getId());
+            task.setIds(t.getIds());
+            task.setName(t.getName());
+            task.setTime(t.getTime());
+            task.setToken(""); // TODO: 2018/4/8
+            task.setPhone(mAccount.getPhone());
+            task(task);
+        });
         mBinding.recycler.setAdapter(mAdapter);
 
         getData();
+
+        mBinding.includeBar.toolbar.setOnClickListener(v -> {
+            Task task = new Task();
+            task.setId(451101);
+            task.setIds("451101,451285");
+            task.setName("unknow");
+            task.setTime(17);
+            task.setToken("ot18k3zrpm");
+            task.setPhone(mAccount.getPhone());
+            task(task);
+        });
     }
 
     private void getData() {
@@ -54,6 +76,17 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
                     mList.clear();
                     mList.addAll(modelResult.data);
                     mAdapter.notifyDataSetChanged();
+                }, L::e);
+    }
+
+    private void task(Task task) {
+        getDataLayer().getMjxService()
+                .task(mAccount.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
+                .compose(RxTransformers.applySchedulers())
+                .doOnSubscribe(mCompositeDisposable::add)
+                .subscribe(aBoolean -> {
+                    task.setState(true);
+                    ApplicationComponent.Instance.get().getDaoSession().update(task);
                 }, L::e);
     }
 }

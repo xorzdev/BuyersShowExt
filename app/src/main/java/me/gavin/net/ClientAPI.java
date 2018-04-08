@@ -2,10 +2,7 @@ package me.gavin.net;
 
 import com.google.gson.JsonArray;
 
-import java.util.List;
-
 import io.reactivex.Observable;
-import me.gavin.app.Model;
 import me.gavin.app.ModelResult;
 import okhttp3.ResponseBody;
 import retrofit2.http.Field;
@@ -39,6 +36,14 @@ public interface ClientAPI {
 
     @GET("buyer/plan/type/A/category/T/stat/waiting")
     Observable<ModelResult> getWaiting(@Header("Cookie") String cookie);
+
+    @FormUrlEncoded
+    @PUT("buyer/task")
+    Observable<ResponseBody> task(
+            @Header("Cookie") String cookie,
+            @Field("plan_id") long id,
+            @Field("_token") String token,
+            @Field("plan_ids[]") String... ids);
 
 
     /* **************************************************************************** *
