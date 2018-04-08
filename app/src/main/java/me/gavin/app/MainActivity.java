@@ -7,9 +7,6 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.view.inputmethod.EditorInfo;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
 import me.gavin.base.RequestCode;
