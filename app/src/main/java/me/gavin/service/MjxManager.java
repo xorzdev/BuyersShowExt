@@ -15,15 +15,16 @@ import io.reactivex.ObservableSource;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.functions.Function;
 import me.gavin.app.Account;
+import me.gavin.app.Config;
 import me.gavin.app.ModelResult;
 import me.gavin.app.Task;
 import me.gavin.base.RxBus;
+import me.gavin.base.RxTransformers;
 import me.gavin.db.dao.AccountDao;
 import me.gavin.db.dao.TaskDao;
 import me.gavin.service.base.BaseManager;
 import me.gavin.service.base.DataLayer;
 import me.gavin.util.L;
-import okhttp3.MediaType;
 import okhttp3.ResponseBody;
 
 /**
@@ -99,8 +100,8 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
 
     @Override
     public Observable<List<Task>> tasks() {
-        String sql = " SELECT * FROM TASK LEFT JOIN ACCOUNT ON TASK.PHONE = ACCOUNT.PHONE WHERE TASK.STATE = ? ";
-        Cursor cursor = getDaoSession().getDatabase().rawQuery(sql, new String[]{"0"});
+        String sql = " SELECT * FROM TASK LEFT JOIN ACCOUNT ON TASK.PHONE = ACCOUNT.PHONE WHERE TASK.TIME > ? AND TASK.STATE > ? ";
+        Cursor cursor = getDaoSession().getDatabase().rawQuery(sql, new String[]{String.valueOf(System.currentTimeMillis() - 1000 * 60 * 30), "-2"});
         List<Task> result = new ArrayList<>();
         while (cursor.moveToNext()) {
             Task task = new Task(
@@ -122,15 +123,11 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
         return Observable.just(result);
     }
 
-    private Observable<ResponseBody> debug() {
-        L.e("debug - " + System.currentTimeMillis());
-        return Observable.just(ResponseBody.create(MediaType.parse("text/plain"), " ~~~~~~ "));
-    }
-
     @Override
     public Observable<Boolean> task(Task task) {
-        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
-                .map(ResponseBody::string)
+//        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
+//                .map(ResponseBody::string)
+        return task2(task)
                 .map(Jsoup::parse)
                 .compose(reLogin(task.getCookie()))
                 .map(document -> {
@@ -143,12 +140,26 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
-                            if (System.currentTimeMillis() - task.getTime() > 1000 * 10) {
+                            if (System.currentTimeMillis() - task.getTime() > Config.TIME_AFTER) {
                                 return Observable.error(new Throwable("尽力了"));
                             }
-                            return Observable.just(0).delay(1050, TimeUnit.MILLISECONDS);
+                            return Observable.just(0).delay(Config.TIME_MIN
+                                    + Math.round(Math.random() * (Config.TIME_MAX - Config.TIME_MIN)), TimeUnit.MILLISECONDS);
                         }))
                 .map(document -> true);
+    }
+
+    private Observable<String> task2(Task task) {
+        return Observable.defer(() -> {
+            L.d("<-- " + task);
+            return Observable.just(0);
+        }).delay(Math.round(Math.random() * 500), TimeUnit.MILLISECONDS)
+                .compose(RxTransformers.log())
+                .map(arg0 -> {
+                    L.d("--> " + task);
+                    return arg0;
+                })
+                .map(arg0 -> "xxx");
     }
 
     /**

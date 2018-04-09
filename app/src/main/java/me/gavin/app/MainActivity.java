@@ -11,7 +11,12 @@ import android.view.inputmethod.EditorInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.functions.Function;
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
 import me.gavin.base.RequestCode;
@@ -23,6 +28,7 @@ import me.gavin.ext.mjx.databinding.DialogAccountBinding;
 import me.gavin.ext.mjx.databinding.DialogLoginBinding;
 import me.gavin.inject.component.ApplicationComponent;
 import me.gavin.util.InputUtil;
+import me.gavin.util.L;
 
 public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
@@ -44,6 +50,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
         mBinding.fab.setOnClickListener(v -> showSelectAccountDialog());
 
+        initDebugData();
         getData();
     }
 
@@ -51,7 +58,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     protected void onResume() {
         super.onResume();
         mBinding.fab.show();
-        getData();
+//        getData();
     }
 
     @Override
@@ -64,7 +71,6 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         getDataLayer().getMjxService()
                 .tasks()
                 .compose(RxTransformers.applySchedulers())
-                .compose(RxTransformers.log())
                 .doOnSubscribe(disposable -> {
                     mCompositeDisposable.add(disposable);
                     mBinding.refresh.setRefreshing(true);
@@ -75,6 +81,8 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
                     mList.clear();
                     mList.addAll(tasks);
                     mAdapter.notifyDataSetChanged();
+
+                    initTimer();
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
     }
 
@@ -149,7 +157,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     }
 
     private void task(Task task) {
-        task.setTime(System.currentTimeMillis()); // TODO: 2018/4/9
+        L.e(task);
         getDataLayer().getMjxService()
                 .task(task)
                 .compose(RxTransformers.applySchedulers())
@@ -161,6 +169,52 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
                     task.setState(-1);
                     getDataLayer().getMjxService().insertOrReplace(task);
                     Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show();
+                });
+    }
+
+    private void initDebugData() {
+        long time = System.currentTimeMillis();
+        List<Task> list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
+            Task task = new Task();
+            task.setName("任务_" + i + " - ");
+            task.setId(1000 + i);
+            task.setIds(String.valueOf(task.getId()));
+            task.setToken("~~~~~~");
+            task.setTime(time + 1000 * 60 * (i - 5));
+            list.add(task);
+        }
+        ApplicationComponent.Instance.get().getDaoSession().getTaskDao().deleteAll();
+        ApplicationComponent.Instance.get().getDaoSession().getTaskDao().saveInTx(list);
+    }
+
+    private void initTimer() {
+        Observable.fromIterable(mList)
+                .filter(task -> task.getTime() - Config.TIME_BEFORM > System.currentTimeMillis())
+                .toSortedList((o1, o2) -> o1.getTime() > o2.getTime() ? 1 : -1)
+                .toObservable()
+                .map(ts -> ts.get(0))
+                .map(task -> {
+                    long time = task.getTime() - Config.TIME_BEFORM - System.currentTimeMillis();
+                    if (time > 1000) {
+                        throw new TimeoutException(String.valueOf(time));
+                    }
+                    return task;
+                })
+                .retryWhen(throwableObservable -> throwableObservable
+                        .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
+                            if (t instanceof TimeoutException) {
+                                long time = Long.valueOf(t.getMessage());
+                                L.e("时间未到，重新计时：" + time);
+                                return Observable.just(0).delay(time / 2, TimeUnit.MILLISECONDS);
+                            }
+                            return Observable.error(new Throwable("出错了！"));
+                        }))
+                .flatMap(task -> Observable.fromIterable(mList))
+                .filter(task -> Math.abs(task.getTime() - System.currentTimeMillis()) < 1000 * 30)
+                .doOnSubscribe(mCompositeDisposable::add)
+                .subscribe(this::task, t -> {
+
                 });
     }
 }

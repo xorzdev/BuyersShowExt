@@ -2,19 +2,21 @@ package me.gavin.app;
 
 import android.app.Service;
 import android.content.Intent;
-import android.os.Handler;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import javax.inject.Inject;
 
 import dagger.Lazy;
 import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Function;
 import me.gavin.base.RxTransformers;
 import me.gavin.inject.component.ApplicationComponent;
 import me.gavin.service.base.DataLayer;
@@ -32,8 +34,6 @@ public class TaskService extends Service {
     @Inject
     CompositeDisposable mCompositeDisposable;
 
-    private Handler mHandler;
-
     private final List<Task> tasks = new ArrayList<>();
 
     @Nullable
@@ -47,15 +47,8 @@ public class TaskService extends Service {
         super.onCreate();
         L.e("onCreate - " + this);
         ApplicationComponent.Instance.get().inject(this);
-
-        mHandler = new Handler(msg -> {
-            switch (msg.what) {
-
-            }
-            return false;
-        });
-
         initTasks();
+        initTimer();
     }
 
     @Override
@@ -85,10 +78,46 @@ public class TaskService extends Service {
     }
 
     private void initTimer() {
-        Observable.interval(400, TimeUnit.MILLISECONDS)
+        Observable.fromIterable(tasks)
+                .filter(task -> task.getTime() - Config.TIME_BEFORM > System.currentTimeMillis())
+                .toSortedList((o1, o2) -> o1.getTime() > o2.getTime() ? 1 : -1)
+                .toObservable()
+                .map(ts -> ts.get(0))
+                .map(task -> {
+                    long time = task.getTime() - Config.TIME_BEFORM - System.currentTimeMillis();
+                    if (time > 1000) {
+                        throw new TimeoutException(String.valueOf(time));
+                    }
+                    return task;
+                })
+                .retryWhen(throwableObservable -> throwableObservable
+                        .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
+                            if (t instanceof TimeoutException) {
+                                long time = Long.valueOf(t.getMessage());
+                                return Observable.just(0).delay(time / 2, TimeUnit.MILLISECONDS);
+                            }
+                            return Observable.error(new Throwable("出错了！"));
+                        }))
+                .flatMap(task -> Observable.fromIterable(tasks))
+                .filter(task -> Math.abs(task.getTime() - System.currentTimeMillis()) < 1000 * 60 * 5)
                 .doOnSubscribe(mCompositeDisposable::add)
-                .subscribe(arg0 -> {
+                .subscribe(this::task, t -> {
 
+                });
+    }
+
+    private void task(Task task) {
+        mDataLayer.get().getMjxService()
+                .task(task)
+                .compose(RxTransformers.applySchedulers())
+                .doOnSubscribe(mCompositeDisposable::add)
+                .subscribe(aBoolean -> {
+                    task.setState(1);
+                    mDataLayer.get().getMjxService().insertOrReplace(task);
+                }, t -> {
+                    task.setState(-1);
+                    mDataLayer.get().getMjxService().insertOrReplace(task);
+//                    Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show();
                 });
     }
 }
