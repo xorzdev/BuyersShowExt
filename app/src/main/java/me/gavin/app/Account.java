@@ -15,16 +15,16 @@ public class Account {
     @Id
     private String phone;
     private String pass;
-    private String name;
+    private String nick;
     private String avatar;
     private String cookie;
 
-    @Generated(hash = 1116764568)
-    public Account(String phone, String pass, String name, String avatar,
+    @Generated(hash = 309570008)
+    public Account(String phone, String pass, String nick, String avatar,
                    String cookie) {
         this.phone = phone;
         this.pass = pass;
-        this.name = name;
+        this.nick = nick;
         this.avatar = avatar;
         this.cookie = cookie;
     }
@@ -49,12 +49,12 @@ public class Account {
         this.pass = pass;
     }
 
-    public String getName() {
-        return name;
+    public String getNick() {
+        return this.nick;
     }
 
-    public void setName(String name) {
-        this.name = name;
+    public void setNick(String nick) {
+        this.nick = nick;
     }
 
     public String getAvatar() {
@@ -71,5 +71,14 @@ public class Account {
 
     public void setCookie(String cookie) {
         this.cookie = cookie;
+    }
+
+    @Override
+    public String toString() {
+        return "Account{" +
+                "phone='" + phone + '\'' +
+                ", nick='" + nick + '\'' +
+                ", avatar='" + avatar + '\'' +
+                '}';
     }
 }

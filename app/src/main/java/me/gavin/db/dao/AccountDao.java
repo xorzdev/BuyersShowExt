@@ -26,7 +26,7 @@ public class AccountDao extends AbstractDao<Account, String> {
     public static class Properties {
         public final static Property Phone = new Property(0, String.class, "phone", true, "PHONE");
         public final static Property Pass = new Property(1, String.class, "pass", false, "PASS");
-        public final static Property Name = new Property(2, String.class, "name", false, "NAME");
+        public final static Property Nick = new Property(2, String.class, "nick", false, "NICK");
         public final static Property Avatar = new Property(3, String.class, "avatar", false, "AVATAR");
         public final static Property Cookie = new Property(4, String.class, "cookie", false, "COOKIE");
     }
@@ -46,7 +46,7 @@ public class AccountDao extends AbstractDao<Account, String> {
         db.execSQL("CREATE TABLE " + constraint + "\"ACCOUNT\" (" + //
                 "\"PHONE\" TEXT PRIMARY KEY NOT NULL ," + // 0: phone
                 "\"PASS\" TEXT," + // 1: pass
-                "\"NAME\" TEXT," + // 2: name
+                "\"NICK\" TEXT," + // 2: nick
                 "\"AVATAR\" TEXT," + // 3: avatar
                 "\"COOKIE\" TEXT);"); // 4: cookie
     }
@@ -71,9 +71,9 @@ public class AccountDao extends AbstractDao<Account, String> {
             stmt.bindString(2, pass);
         }
  
-        String name = entity.getName();
-        if (name != null) {
-            stmt.bindString(3, name);
+        String nick = entity.getNick();
+        if (nick != null) {
+            stmt.bindString(3, nick);
         }
  
         String avatar = entity.getAvatar();
@@ -101,9 +101,9 @@ public class AccountDao extends AbstractDao<Account, String> {
             stmt.bindString(2, pass);
         }
  
-        String name = entity.getName();
-        if (name != null) {
-            stmt.bindString(3, name);
+        String nick = entity.getNick();
+        if (nick != null) {
+            stmt.bindString(3, nick);
         }
  
         String avatar = entity.getAvatar();
@@ -127,7 +127,7 @@ public class AccountDao extends AbstractDao<Account, String> {
         Account entity = new Account( //
             cursor.isNull(offset + 0) ? null : cursor.getString(offset + 0), // phone
             cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1), // pass
-            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // name
+            cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2), // nick
             cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3), // avatar
             cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4) // cookie
         );
@@ -138,7 +138,7 @@ public class AccountDao extends AbstractDao<Account, String> {
     public void readEntity(Cursor cursor, Account entity, int offset) {
         entity.setPhone(cursor.isNull(offset + 0) ? null : cursor.getString(offset + 0));
         entity.setPass(cursor.isNull(offset + 1) ? null : cursor.getString(offset + 1));
-        entity.setName(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
+        entity.setNick(cursor.isNull(offset + 2) ? null : cursor.getString(offset + 2));
         entity.setAvatar(cursor.isNull(offset + 3) ? null : cursor.getString(offset + 3));
         entity.setCookie(cursor.isNull(offset + 4) ? null : cursor.getString(offset + 4));
      }

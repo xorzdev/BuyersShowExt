@@ -2,6 +2,8 @@ package me.gavin.service.base;
 
 import com.google.gson.JsonArray;
 
+import java.util.List;
+
 import io.reactivex.Observable;
 import me.gavin.app.Account;
 import me.gavin.app.ModelResult;
@@ -32,17 +34,19 @@ public class DataLayer {
     }
 
     public interface MjxService {
-        Observable<String> getAccount();
-
-        Observable<String> login(String phone, String pass);
+        Observable<Account> login(String phone, String pass);
 
         void insertOrReplace(Account account);
 
         Observable<ModelResult> getWaiting(String cookie);
 
-        void addTask(Task task);
+        Observable<String> getToken(String cookie, long id, String ids);
 
-        Observable<Boolean> task(String cookie, long id, String token, String... ids);
+        void insertOrReplace(Task task);
+
+        Observable<List<Task>> tasks();
+
+        Observable<Boolean> task(Task task);
     }
 
     public interface SettingService {

@@ -19,15 +19,16 @@ public class Task {
     private String ids;
     private String token;
     private String phone;
-    private boolean state;
+    private int state; // 0:pending 1:success -1:failed
     private transient String cookie;
 
     private String name;
-    private int time;
+    private String cover;
+    private long time;
 
-    @Generated(hash = 1964641812)
+    @Generated(hash = 1080060508)
     public Task(Long _id, long id, String ids, String token, String phone,
-            boolean state, String name, int time) {
+                int state, String name, String cover, long time) {
         this._id = _id;
         this.id = id;
         this.ids = ids;
@@ -35,6 +36,7 @@ public class Task {
         this.phone = phone;
         this.state = state;
         this.name = name;
+        this.cover = cover;
         this.time = time;
     }
 
@@ -82,6 +84,14 @@ public class Task {
         this.phone = phone;
     }
 
+    public int getState() {
+        return this.state;
+    }
+
+    public void setState(int state) {
+        this.state = state;
+    }
+
     public String getName() {
         return this.name;
     }
@@ -90,20 +100,39 @@ public class Task {
         this.name = name;
     }
 
-    public int getTime() {
+    public String getCover() {
+        return this.cover;
+    }
+
+    public void setCover(String cover) {
+        this.cover = cover;
+    }
+
+    public long getTime() {
         return this.time;
     }
 
-    public void setTime(int time) {
+    public void setTime(long time) {
         this.time = time;
     }
 
-    public boolean getState() {
-        return this.state;
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
     }
 
-    public void setState(boolean state) {
-        this.state = state;
+    public String getCookie() {
+        return cookie;
     }
 
+    @Override
+    public String toString() {
+        return "Task{" +
+                "id=" + id +
+                ", ids='" + ids + '\'' +
+                ", token='" + token + '\'' +
+                ", phone='" + phone + '\'' +
+                ", name='" + name + '\'' +
+                ", time=" + time +
+                '}';
+    }
 }

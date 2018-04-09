@@ -7,7 +7,7 @@
 
         <variable
             name="item"
-            type="me.gavin.app.Model" />
+            type="me.gavin.app.Task" />
     </data>
 
     <android.support.constraint.ConstraintLayout
@@ -31,30 +31,10 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginStart="8dp"
-            android:text="@{item.name}"
+            android:text="@{item.name + String.valueOf(item.time)}"
             app:layout_constraintStart_toEndOf="@+id/imageView"
             app:layout_constraintTop_toTopOf="@+id/imageView"
             tools:text="名称" />
-
-        <TextView
-            android:id="@+id/tvType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            app:layout_constraintBottom_toTopOf="@+id/tvPrice"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            app:layout_constraintTop_toBottomOf="@+id/tvName"
-            tools:text="类型" />
-
-        <TextView
-            android:id="@+id/tvPrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@{`¥` + item.price + `  ` + item.doing + `/` + item.total + `  ` + item.time + `:00`}"
-            app:layout_constraintBottom_toBottomOf="@+id/imageView"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            tools:text="¥200  2/10  19:00" />
 
     </android.support.constraint.ConstraintLayout>
 

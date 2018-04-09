@@ -28,6 +28,10 @@
             </intent-filter>
         </activity>
 
+        <service
+            android:name="me.gavin.app.TaskService"
+            android:exported="false" />
+
     </application>
 
 </manifest>

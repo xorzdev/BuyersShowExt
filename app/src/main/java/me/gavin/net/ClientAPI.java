@@ -12,6 +12,8 @@ import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
+import retrofit2.http.Path;
+import retrofit2.http.Query;
 import retrofit2.http.Streaming;
 import retrofit2.http.Url;
 
@@ -28,7 +30,7 @@ public interface ClientAPI {
      * **************************************************************************** */
 
     @GET("buyer/mine")
-    Observable<ResponseBody> getAccount();
+    Observable<ResponseBody> getAccount(@Header("Cookie") String cookie);
 
     @FormUrlEncoded
     @PUT("common/buyer/login")
@@ -36,6 +38,14 @@ public interface ClientAPI {
 
     @GET("buyer/plan/type/A/category/T/stat/waiting")
     Observable<ModelResult> getWaiting(@Header("Cookie") String cookie);
+
+    // buyer/plan/637875?show_type=preview&ids=637875,637880
+    @GET("buyer/plan/{id}")
+    Observable<ResponseBody> getDetail(
+            @Header("Cookie") String cookie,
+            @Path("id") long id,
+            @Query("show_type") String type,
+            @Query("ids") String ids);
 
     @FormUrlEncoded
     @PUT("buyer/task")
