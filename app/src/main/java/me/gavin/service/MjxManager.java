@@ -1,5 +1,6 @@
 package me.gavin.service;
 
+import android.accounts.AccountsException;
 import android.database.Cursor;
 
 import org.jsoup.Jsoup;
@@ -16,10 +17,8 @@ import io.reactivex.ObservableTransformer;
 import io.reactivex.functions.Function;
 import me.gavin.app.Account;
 import me.gavin.app.Config;
-import me.gavin.app.ModelResult;
 import me.gavin.app.Task;
 import me.gavin.base.RxBus;
-import me.gavin.base.RxTransformers;
 import me.gavin.db.dao.AccountDao;
 import me.gavin.db.dao.TaskDao;
 import me.gavin.service.base.BaseManager;
@@ -41,7 +40,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .map(Jsoup::parse)
                 .map(document -> {
                     if ("发生错误".equals(document.head().tagName("title").text())) {
-                        throw new IllegalArgumentException(document
+                        throw new IllegalStateException(document
                                 .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
                                 .text());
                     }
@@ -79,8 +78,13 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     }
 
     @Override
-    public Observable<ModelResult> getWaiting(String cookie) {
-        return getApi().getWaiting(cookie);
+    public Observable<List<Task>> getWaiting(String cookie, String category) {
+        return getApi().getWaiting(cookie, category)
+                .map(modelResult -> modelResult.data)
+                .flatMap(Observable::fromIterable)
+                .map(Task::format)
+                .toSortedList((o1, o2) -> o1.getHour() - o2.getHour())
+                .toObservable();
     }
 
     @Override
@@ -108,12 +112,19 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                     cursor.getLong(cursor.getColumnIndex(TaskDao.Properties._id.columnName)),
                     cursor.getLong(cursor.getColumnIndex(TaskDao.Properties.Id.columnName)),
                     cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Ids.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Token.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Phone.columnName)),
-                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.State.columnName)),
                     cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Name.columnName)),
                     cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Cover.columnName)),
-                    cursor.getLong(cursor.getColumnIndex(TaskDao.Properties.Time.columnName))
+                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Type.columnName)),
+                    cursor.getDouble(cursor.getColumnIndex(TaskDao.Properties.Price.columnName)),
+                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Hour.columnName)),
+                    cursor.getLong(cursor.getColumnIndex(TaskDao.Properties.Time.columnName)),
+                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Total.columnName)),
+                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Doing.columnName)),
+                    cursor.getDouble(cursor.getColumnIndex(TaskDao.Properties.Reward.columnName)),
+                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Phone.columnName)),
+                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Token.columnName)),
+                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.State.columnName)),
+                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Count.columnName))
             );
             String cookie = cursor.getString(cursor.getColumnIndex(AccountDao.Properties.Cookie.columnName));
             task.setCookie(cookie);
@@ -125,14 +136,14 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
 
     @Override
     public Observable<Boolean> task(Task task) {
-//        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
-//                .map(ResponseBody::string)
-        return task2(task)
+        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
+                .map(ResponseBody::string)
+//        return task2(task)
                 .map(Jsoup::parse)
                 .compose(reLogin(task.getCookie()))
                 .map(document -> {
                     if ("发生错误".equals(document.head().tagName("title").text())) {
-                        throw new IllegalArgumentException(document
+                        throw new IllegalStateException(document
                                 .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
                                 .text());
                     }
@@ -152,9 +163,10 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     private Observable<String> task2(Task task) {
         return Observable.defer(() -> {
             L.d("<-- " + task);
+            task.setCount(task.getCount() + 1);
             return Observable.just(0);
-        }).delay(Math.round(Math.random() * 500), TimeUnit.MILLISECONDS)
-                .compose(RxTransformers.log())
+//        }).delay(Math.round(Math.random() * 500), TimeUnit.MILLISECONDS)
+        }).delay(1000, TimeUnit.MILLISECONDS)
                 .map(arg0 -> {
                     L.d("--> " + task);
                     return arg0;
@@ -163,7 +175,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     }
 
     /**
-     * 如果 token 过期 - 重新登录并报错
+     * 如果 token 过期 - 重新登录并重试
      */
     private ObservableTransformer<Document, Document> reLogin(String cookie) {
         return upstream -> upstream
@@ -179,10 +191,17 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                                     account.setCookie(account1.getCookie());
                                     getDaoSession().getAccountDao().update(account);
                                     RxBus.get().post(account);
-                                    throw new NullPointerException("需登录");
+                                    throw new AccountsException("登录失效");
                                 });
                     }
                     return Observable.just(document);
-                });
+                })
+                .retryWhen(throwableObservable -> throwableObservable
+                        .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
+                            if (t instanceof AccountsException && "登录失效".equals(t.getMessage())) {
+                                return Observable.just(0).delay(1000, TimeUnit.MILLISECONDS);
+                            }
+                            return Observable.error(new Throwable(t));
+                        }));
     }
 }

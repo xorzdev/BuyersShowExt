@@ -9,7 +9,7 @@ import java.util.List;
  */
 public class ModelResult {
 
-    public List<Model> data;
+    public List<Task> data;
     public Pages pages;
     public int count;
 

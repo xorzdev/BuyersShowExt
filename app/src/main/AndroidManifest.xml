@@ -14,19 +14,16 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme.NoActionBar">
 
-        <activity android:name="me.gavin.app.MainActivity">
+        <activity
+            android:name="me.gavin.app.MainActivity"
+            android:launchMode="singleTask">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
-        <activity android:name="me.gavin.app.AddActivity">
-            <intent-filter>
-                <action android:name="android.intent.action.TEST" />
-                <category android:name="android.intent.category.TEST" />
-            </intent-filter>
-        </activity>
+        <activity android:name="me.gavin.app.AddActivity" />
 
         <service
             android:name="me.gavin.app.TaskService"

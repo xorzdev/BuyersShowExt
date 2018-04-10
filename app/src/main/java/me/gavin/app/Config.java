@@ -7,10 +7,9 @@ package me.gavin.app;
  */
 public class Config {
 
-    public static final long TIME_BEFORM = 1000 * 15;
+    public static final long TIME_BEFORE = 1000 * 15;
     public static final long TIME_AFTER = 1000 * 60 * 3;
 
     public static final long TIME_MIN = 400;
     public static final long TIME_MAX = 1050;
-
 }

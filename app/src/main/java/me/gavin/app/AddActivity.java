@@ -3,13 +3,14 @@ package me.gavin.app;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.view.MenuItem;
 
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
 
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
+import me.gavin.base.RxBus;
 import me.gavin.base.RxTransformers;
 import me.gavin.base.recycler.BindingAdapter;
 import me.gavin.ext.mjx.R;
@@ -18,10 +19,17 @@ import me.gavin.inject.component.ApplicationComponent;
 
 public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
+    public static final String CATEGORY_LOVE = "D";
+    public static final String CATEGORY_TEST = "T";
+    public static final String CATEGORY_IMAGE = "A";
+    public static final String CATEGORY_VIDEO = "C";
+
     private Account mAccount;
 
-    private final List<Model> mList = new ArrayList<>();
-    private BindingAdapter<Model> mAdapter;
+    private final List<Task> mList = new ArrayList<>();
+    private BindingAdapter<Task> mAdapter;
+
+    private String mCategory = CATEGORY_TEST;
 
     @Override
     protected int getLayoutId() {
@@ -42,10 +50,39 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
         mBinding.includeBar.toolbar.setNavigationIcon(R.drawable.vt_arrow_back_black_24dp);
         mBinding.includeBar.toolbar.setNavigationOnClickListener(v -> finish());
+        mBinding.includeBar.toolbar.inflateMenu(R.menu.menu_type);
+        MenuItem menuType = mBinding.includeBar.toolbar.getMenu().findItem(R.id.action_category);
+        mBinding.includeBar.toolbar.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.category_love:
+                    menuType.setTitle(item.getTitle());
+                    mCategory = CATEGORY_LOVE;
+                    getData();
+                    return true;
+                case R.id.category_test:
+                    menuType.setTitle(item.getTitle());
+                    mCategory = CATEGORY_TEST;
+                    getData();
+                    return true;
+                case R.id.category_image:
+                    menuType.setTitle(item.getTitle());
+                    mCategory = CATEGORY_IMAGE;
+                    getData();
+                    return true;
+                case R.id.category_video:
+                    menuType.setTitle(item.getTitle());
+                    mCategory = CATEGORY_VIDEO;
+                    getData();
+                    return true;
+                default:
+                    return false;
+            }
+        });
+
 
         mBinding.refresh.setOnRefreshListener(this::getData);
 
-        mAdapter = new BindingAdapter<>(this, mList, R.layout.item_model);
+        mAdapter = new BindingAdapter<>(this, mList, R.layout.item_task);
         mAdapter.setOnItemClickListener(i -> getToken(mList.get(i)));
         mBinding.recycler.setAdapter(mAdapter);
 
@@ -54,7 +91,7 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
     private void getData() {
         getDataLayer().getMjxService()
-                .getWaiting(mAccount.getCookie())
+                .getWaiting(mAccount.getCookie(), mCategory)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(disposable -> {
                     mCompositeDisposable.add(disposable);
@@ -62,38 +99,22 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
                 })
                 .doOnComplete(() -> mBinding.refresh.setRefreshing(false))
                 .doOnError(t -> mBinding.refresh.setRefreshing(false))
-                .subscribe(modelResult -> {
+                .subscribe(list -> {
                     mList.clear();
-                    mList.addAll(modelResult.data);
+                    mList.addAll(list);
                     mAdapter.notifyDataSetChanged();
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
     }
 
-    private void getToken(Model model) {
+    private void getToken(Task task) {
         getDataLayer().getMjxService()
-                .getToken(mAccount.getCookie(), model.getId(), model.getIds())
+                .getToken(mAccount.getCookie(), task.getId(), task.getIds())
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
                 .subscribe(token -> {
-                    Task task = new Task();
-                    task.setId(model.getId());
-                    task.setIds(model.getIds());
-                    task.setName(model.getName());
-                    task.setCover(model.getCover());
-                    task.setTime(getTime(model.getTime()));
-                    task.setToken(token);
-                    task.setPhone(mAccount.getPhone());
-                    getDataLayer().getMjxService().insertOrReplace(task);
+                    getDataLayer().getMjxService().insertOrReplace(task.format(token, mAccount.getPhone()));
                     Snackbar.make(mBinding.recycler, "添加成功", Snackbar.LENGTH_LONG).show();
+                    RxBus.get().post(task);
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
-    }
-
-    private long getTime(int time) {
-        Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, time);
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 0);
-        return calendar.getTimeInMillis();
     }
 }

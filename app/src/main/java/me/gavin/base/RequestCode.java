@@ -6,6 +6,11 @@ package me.gavin.base;
  * @author gavin.xiong 2016/12/30
  */
 public class RequestCode {
+
+    /**
+     * 无所谓
+     */
+    public static final int DONT_CARE = 0X100;
     /**
      * 拍照
      */
@@ -30,5 +35,4 @@ public class RequestCode {
      * 扫描
      */
     public static final int SCAN = 0x106;
-
 }

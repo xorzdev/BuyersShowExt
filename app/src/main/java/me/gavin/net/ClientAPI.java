@@ -36,8 +36,15 @@ public interface ClientAPI {
     @PUT("common/buyer/login")
     Observable<ResponseBody> login(@Field("name") String phone, @Field("password") String pass);
 
-    @GET("buyer/plan/type/A/category/T/stat/waiting")
-    Observable<ModelResult> getWaiting(@Header("Cookie") String cookie);
+    // buyer/plan/type/A/category/D/stat/waiting 我喜欢
+    // buyer/plan/type/A/category/T/stat/waiting 试客
+    // buyer/plan/type/A/category/A/stat/waiting 图文
+    // buyer/plan/type/A/category/C/stat/waiting 短视频
+    // buyer/plan/type/A/category/C/stat/running | stoped 待领取 & 已结束
+    @GET("buyer/plan/type/A/category/{category}/stat/waiting")
+    Observable<ModelResult> getWaiting(
+            @Header("Cookie") String cookie,
+            @Path("category") String category);
 
     // buyer/plan/637875?show_type=preview&ids=637875,637880
     @GET("buyer/plan/{id}")

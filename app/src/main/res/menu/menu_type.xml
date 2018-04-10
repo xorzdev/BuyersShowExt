@@ -1,0 +1,35 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+    <item
+        android:id="@+id/action_category"
+        android:title="试客专区"
+        app:showAsAction="ifRoom">
+
+        <menu>
+
+            <item
+                android:id="@+id/category_love"
+                android:orderInCategory="100"
+                android:title="我喜欢"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/category_test"
+                android:orderInCategory="100"
+                android:title="试客专区"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/category_image"
+                android:orderInCategory="100"
+                android:title="图文评测"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/category_video"
+                android:orderInCategory="100"
+                android:title="短视频"
+                app:showAsAction="never" />
+
+        </menu>
+
+    </item>
+
+</menu>

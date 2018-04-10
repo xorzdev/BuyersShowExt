@@ -6,7 +6,6 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import me.gavin.app.Account;
-import me.gavin.app.ModelResult;
 import me.gavin.app.Task;
 import okhttp3.ResponseBody;
 
@@ -38,7 +37,7 @@ public class DataLayer {
 
         void insertOrReplace(Account account);
 
-        Observable<ModelResult> getWaiting(String cookie);
+        Observable<List<Task>> getWaiting(String cookie, String type);
 
         Observable<String> getToken(String cookie, long id, String ids);
 
