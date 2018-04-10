@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
@@ -33,6 +34,8 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     private Task mCXTask;
     private int mCXPosition;
 
+    private int mTime = Task.TIME_TODAY;
+
     @Override
     protected int getLayoutId() {
         return R.layout.activity_main;
@@ -41,6 +44,30 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     @Override
     protected void afterCreate(@Nullable Bundle savedInstanceState) {
         startService(new Intent(this, TaskService.class));
+
+        mBinding.includeBar.toolbar.inflateMenu(R.menu.menu_main);
+        MenuItem menuType = mBinding.includeBar.toolbar.getMenu().findItem(R.id.action_time);
+        mBinding.includeBar.toolbar.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.time_today:
+                    menuType.setTitle(item.getTitle());
+                    mTime = Task.TIME_TODAY;
+                    getData();
+                    return true;
+                case R.id.time_hopeful:
+                    menuType.setTitle(item.getTitle());
+                    mTime = Task.TIME_HOPEFUL;
+                    getData();
+                    return true;
+                case R.id.time_all:
+                    menuType.setTitle(item.getTitle());
+                    mTime = Task.TIME_ALL;
+                    getData();
+                    return true;
+                default:
+                    return false;
+            }
+        });
 
         mBinding.refresh.setOnRefreshListener(this::getData);
 
@@ -98,7 +125,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
     private void getData() {
         getDataLayer().getMjxService()
-                .tasks()
+                .tasks(mTime)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(disposable -> {
                     mCompositeDisposable.add(disposable);

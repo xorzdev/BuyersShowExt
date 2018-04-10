@@ -83,7 +83,7 @@ public class TaskService extends Service {
 
     private void initTasks() {
         mDataLayer.get().getMjxService()
-                .tasks()
+                .tasks(Task.TIME_HOPEFUL)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
                 .subscribe(ts -> {
@@ -94,26 +94,22 @@ public class TaskService extends Service {
     }
 
     private void initTimer() {
-        if (tasks.isEmpty()) {
-            stopSelf();
-            return;
-        } else {
-            NotificationHelper.notify(this, tasks.size(), tasks.get(0).getTime());
-        }
         Observable.fromIterable(tasks)
-                .filter(task -> task.getTime() - Config.TIME_BEFORE > System.currentTimeMillis())
+                .filter(task -> task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER)
                 .toSortedList((o1, o2) -> o1.getTime() > o2.getTime() ? 1 : -1)
                 .toObservable()
                 .map(ts -> {
                     if (ts.isEmpty()) {
                         throw new NullPointerException("暂无任务");
+                    } else {
+                        NotificationHelper.notify(this, ts.size(), tasks.get(0).getTime());
                     }
                     return ts;
                 })
                 .map(ts -> ts.get(0))
                 .map(task -> {
                     long time = task.getTime() - Config.TIME_BEFORE - System.currentTimeMillis();
-                    if (time > 1000) {
+                    if (time > 0) {
                         throw new TimeoutException(String.valueOf(time));
                     }
                     return task;
@@ -125,7 +121,7 @@ public class TaskService extends Service {
                                 L.e("时间未到，重新计时：" + time);
                                 return Observable.just(0).delay(time / 2, TimeUnit.MILLISECONDS);
                             }
-                            return Observable.error(new Throwable("出错了！"));
+                            return Observable.error(new Throwable(t));
                         }))
                 .flatMap(task -> Observable.fromIterable(tasks))
                 .filter(task -> Math.abs(task.getTime() - System.currentTimeMillis()) < 1000 * 30)
@@ -137,7 +133,8 @@ public class TaskService extends Service {
                     mTimerDisposable = disposable;
                 })
                 .subscribe(this::task, t -> {
-                    Toast.makeText(this, t.getMessage(), Toast.LENGTH_LONG).show();
+                    L.e("stopSelf - " + t);
+                    stopSelf();
                 });
     }
 
@@ -147,17 +144,17 @@ public class TaskService extends Service {
                 .task(task)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
+                .doOnComplete(this::initTimer)
+                .doOnError(t -> initTimer())
                 .subscribe(aBoolean -> {
-                    task.setState(1);
-                    L.e("任务结束 - " + task);
+                    task.setState(Task.STATE_SUCCESS);
+                    L.e("任务结束 - 成功 - " + task);
                     mDataLayer.get().getMjxService().insertOrReplace(task);
-                    initTimer();
                 }, t -> {
-                    task.setState(-1);
-                    L.e("任务结束 - " + task);
+                    task.setState(Task.STATE_FAIELD);
+                    L.e("任务结束 - 失败 - " + task + " - " + t.toString());
                     mDataLayer.get().getMjxService().insertOrReplace(task);
-                    Toast.makeText(this, t.getMessage(), Toast.LENGTH_LONG).show();
-                    initTimer();
+                    Toast.makeText(this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
                 });
     }
 }

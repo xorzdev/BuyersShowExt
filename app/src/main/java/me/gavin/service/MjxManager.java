@@ -103,9 +103,17 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     }
 
     @Override
-    public Observable<List<Task>> tasks() {
-        String sql = " SELECT * FROM TASK LEFT JOIN ACCOUNT ON TASK.PHONE = ACCOUNT.PHONE WHERE TASK.TIME > ? AND TASK.STATE > ? ";
-        Cursor cursor = getDaoSession().getDatabase().rawQuery(sql, new String[]{String.valueOf(System.currentTimeMillis() - 1000 * 60 * 30), "-2"});
+    public Observable<List<Task>> tasks(int time) {
+        String sql = " SELECT * FROM TASK LEFT JOIN ACCOUNT ON TASK.PHONE = ACCOUNT.PHONE ";
+        if (time == Task.TIME_TODAY) {
+            long millis = System.currentTimeMillis();
+            long start = millis / TimeUnit.DAYS.toMillis(1) * TimeUnit.DAYS.toMillis(1);
+            long end = start + TimeUnit.DAYS.toMillis(1) - 1;
+            sql += " WHERE TASK.TIME BETWEEN " + start + " AND " + end;
+        } else if (time == Task.TIME_HOPEFUL) {
+            sql += " WHERE TASK.TIME > " + (System.currentTimeMillis() - Config.TIME_AFTER);
+        }
+        Cursor cursor = getDaoSession().getDatabase().rawQuery(sql, null);
         List<Task> result = new ArrayList<>();
         while (cursor.moveToNext()) {
             Task task = new Task(
@@ -131,7 +139,25 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
             result.add(task);
         }
         cursor.close();
-        return Observable.just(result);
+        long millis = System.currentTimeMillis() - Config.TIME_AFTER;
+        return Observable.just(result)
+                .flatMap(Observable::fromIterable)
+                .toSortedList((o1, o2) -> {
+                    if (o1.getTime() >= millis && o2.getTime() >= millis) {
+                        // 都没结束 - 先时间从小到大 - 后状态值从大到小
+                        return o1.getTime() == o2.getTime() ? o2.getState() - o1.getState()
+                                : (int) (o1.getTime() / TimeUnit.HOURS.toMillis(1) - o2.getTime() / TimeUnit.HOURS.toMillis(1));
+                    } else if (o1.getTime() < millis && o2.getTime() < millis) {
+                        // 都已结束 - 先状态从大到小 - 后时间从大到小
+                        return o1.getState() == o2.getState()
+                                ? (int) (o2.getTime() / TimeUnit.HOURS.toMillis(1) - o1.getTime() / TimeUnit.HOURS.toMillis(1))
+                                : o2.getState() - o1.getState();
+                    } else {
+                        // 一个结束一个没结束 - 时间从大到小
+                        return (int) (o2.getTime() / TimeUnit.HOURS.toMillis(1) - o1.getTime() / TimeUnit.HOURS.toMillis(1));
+                    }
+                })
+                .toObservable();
     }
 
     @Override
@@ -151,7 +177,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
-                            if (System.currentTimeMillis() - task.getTime() > Config.TIME_AFTER) {
+                            if (task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER) {
                                 return Observable.error(new Throwable("尽力了"));
                             }
                             return Observable.just(0).delay(Config.TIME_MIN

@@ -47,6 +47,19 @@ public class Task {
     public static final String TYPE_DH = "D"; // 获得
     public static final String TYPE_LL = "F"; // 浏览
 
+    public static final int STATE_PENDING = 0; // 等待中
+    public static final int STATE_SUCCESS = 1; // 成功
+    public static final int STATE_FAIELD = -1; // 失败
+
+    public static final int TIME_TODAY = 0; // 今日
+    public static final int TIME_HOPEFUL = 1; // 未结束的
+    public static final int TIME_ALL = 99; // 全部
+
+    public static final String CATEGORY_LOVE = "D"; // 我喜欢
+    public static final String CATEGORY_TEST = "T"; // 试客专区
+    public static final String CATEGORY_IMAGE = "A"; // 图文评测
+    public static final String CATEGORY_VIDEO = "C"; // 短视频
+
     @Id(autoincrement = true)
     private Long _id;
 

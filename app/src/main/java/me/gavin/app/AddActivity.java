@@ -13,7 +13,6 @@ import java.util.List;
 
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
-import me.gavin.base.RxBus;
 import me.gavin.base.RxTransformers;
 import me.gavin.base.recycler.BindingAdapter;
 import me.gavin.ext.mjx.R;
@@ -22,17 +21,12 @@ import me.gavin.inject.component.ApplicationComponent;
 
 public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
-    public static final String CATEGORY_LOVE = "D";
-    public static final String CATEGORY_TEST = "T";
-    public static final String CATEGORY_IMAGE = "A";
-    public static final String CATEGORY_VIDEO = "C";
-
     private Account mAccount;
 
     private final List<Task> mList = new ArrayList<>();
     private BindingAdapter<Task> mAdapter;
 
-    private String mCategory = CATEGORY_TEST;
+    private String mCategory = Task.CATEGORY_TEST;
 
     @Override
     protected int getLayoutId() {
@@ -53,28 +47,28 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
         mBinding.includeBar.toolbar.setNavigationIcon(R.drawable.vt_arrow_back_black_24dp);
         mBinding.includeBar.toolbar.setNavigationOnClickListener(v -> finish());
-        mBinding.includeBar.toolbar.inflateMenu(R.menu.menu_type);
+        mBinding.includeBar.toolbar.inflateMenu(R.menu.menu_category);
         MenuItem menuType = mBinding.includeBar.toolbar.getMenu().findItem(R.id.action_category);
         mBinding.includeBar.toolbar.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.category_love:
                     menuType.setTitle(item.getTitle());
-                    mCategory = CATEGORY_LOVE;
+                    mCategory = Task.CATEGORY_LOVE;
                     getData();
                     return true;
                 case R.id.category_test:
                     menuType.setTitle(item.getTitle());
-                    mCategory = CATEGORY_TEST;
+                    mCategory = Task.CATEGORY_TEST;
                     getData();
                     return true;
                 case R.id.category_image:
                     menuType.setTitle(item.getTitle());
-                    mCategory = CATEGORY_IMAGE;
+                    mCategory = Task.CATEGORY_IMAGE;
                     getData();
                     return true;
                 case R.id.category_video:
                     menuType.setTitle(item.getTitle());
-                    mCategory = CATEGORY_VIDEO;
+                    mCategory = Task.CATEGORY_VIDEO;
                     getData();
                     return true;
                 default:

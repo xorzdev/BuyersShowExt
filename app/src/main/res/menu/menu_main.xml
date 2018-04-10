@@ -1,0 +1,31 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <item
+        android:id="@+id/action_time"
+        android:title="今日"
+        app:showAsAction="ifRoom">
+
+        <menu>
+
+            <item
+                android:id="@+id/time_today"
+                android:orderInCategory="100"
+                android:title="今日"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/time_hopeful"
+                android:orderInCategory="100"
+                android:title="未结束"
+                app:showAsAction="never" />
+            <item
+                android:id="@+id/time_all"
+                android:orderInCategory="100"
+                android:title="全部"
+                app:showAsAction="never" />
+
+        </menu>
+
+    </item>
+
+</menu>

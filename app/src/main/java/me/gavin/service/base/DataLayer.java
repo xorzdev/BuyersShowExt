@@ -43,7 +43,7 @@ public class DataLayer {
 
         long insertOrReplace(Task task);
 
-        Observable<List<Task>> tasks();
+        Observable<List<Task>> tasks(int time);
 
         Observable<Boolean> task(Task task);
     }
