@@ -83,6 +83,24 @@ public final class NotificationHelper {
                         .build());
     }
 
+    public static void notify(Context cx, Task task, String msg) {
+        NotificationManagerCompat.from(cx)
+                .notify((int) task.getId(), new Notification.Builder(cx)
+                        .setSmallIcon(R.drawable.vt_circle_default_24dp)
+                        .setContentTitle(task.getName())
+                        .setContentText(String.format("已抢 %s 次：%s", task.getCount(), msg))
+                        .setPriority(Notification.PRIORITY_DEFAULT)
+                        .setShowWhen(true)
+                        .setContentIntent(PendingIntent.getActivity(cx, RequestCode.DONT_CARE,
+                                new Intent(cx, MainActivity.class)
+                                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED), // 关键的一步，设置启动模式
+                                PendingIntent.FLAG_UPDATE_CURRENT))
+                        .setDefaults(NotificationCompat.FLAG_FOREGROUND_SERVICE)
+                        .build());
+    }
+
     /**
      * 获取网络图片
      *

@@ -17,7 +17,9 @@ import io.reactivex.ObservableTransformer;
 import io.reactivex.functions.Function;
 import me.gavin.app.Account;
 import me.gavin.app.Config;
+import me.gavin.app.NotificationHelper;
 import me.gavin.app.Task;
+import me.gavin.base.App;
 import me.gavin.base.RxBus;
 import me.gavin.db.dao.AccountDao;
 import me.gavin.db.dao.TaskDao;
@@ -177,6 +179,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
+                            NotificationHelper.notify(App.get(), task, t.getMessage());
                             if (task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER) {
                                 return Observable.error(new Throwable("尽力了"));
                             }

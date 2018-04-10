@@ -4,7 +4,6 @@ import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +18,7 @@ import io.reactivex.ObservableSource;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
+import me.gavin.base.App;
 import me.gavin.base.RxBus;
 import me.gavin.base.RxTransformers;
 import me.gavin.inject.component.ApplicationComponent;
@@ -150,11 +150,12 @@ public class TaskService extends Service {
                     task.setState(Task.STATE_SUCCESS);
                     L.e("任务结束 - 成功 - " + task);
                     mDataLayer.get().getMjxService().insertOrReplace(task);
+                    NotificationHelper.notify(App.get(), task, "成功");
                 }, t -> {
                     task.setState(Task.STATE_FAIELD);
                     L.e("任务结束 - 失败 - " + task + " - " + t.toString());
                     mDataLayer.get().getMjxService().insertOrReplace(task);
-                    Toast.makeText(this, t.getLocalizedMessage(), Toast.LENGTH_LONG).show();
+                    NotificationHelper.notify(App.get(), task, t.getMessage());
                 });
     }
 }
