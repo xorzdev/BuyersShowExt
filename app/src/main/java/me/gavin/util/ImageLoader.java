@@ -105,8 +105,8 @@ public class ImageLoader {
     public static void loadAvatar(ImageView imageView, String url) {
         Glide.with(imageView.getContext())
                 .load(url)
-                .placeholder(R.mipmap.ic_launcher)
-                .error(R.mipmap.ic_launcher)
+                .placeholder(R.drawable.vt_account_default_24dp)
+                .error(R.drawable.vt_account_default_24dp)
                 .override(200, 200)
                 .transform(new GlideCircleTransformation(imageView.getContext()))
                 .into(imageView);

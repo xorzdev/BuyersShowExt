@@ -34,8 +34,8 @@ public final class NotificationHelper {
 
     private static Notification buildNotification(Context cx, String tt, String cn, String tk, String av, PendingIntent i) {
         Notification.Builder builder = new Notification.Builder(cx)
-                .setSmallIcon(R.drawable.vt_arrow_back_black_24dp)
-                // .setLargeIcon(getBitmap(cx, av))
+                .setSmallIcon(R.drawable.vt_account_default_24dp)
+                .setLargeIcon(getBitmap(cx, av))
                 .setContentTitle(tt)
                 .setContentText(cn)
                 .setTicker(tk)
@@ -50,7 +50,7 @@ public final class NotificationHelper {
 
     public static Notification buildNotification(Context cx) {
         return new Notification.Builder(cx)
-                .setSmallIcon(R.drawable.vt_arrow_back_black_24dp)
+                .setSmallIcon(R.drawable.vt_circle_default_24dp)
                 .setContentTitle(String.format("\"%s\"正在运行", cx.getString(R.string.app_name)))
                 .setContentText("点击即可了解详情或停止应用")
                 .setPriority(Notification.PRIORITY_DEFAULT)

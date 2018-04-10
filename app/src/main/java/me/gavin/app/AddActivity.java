@@ -3,6 +3,8 @@ package me.gavin.app;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
@@ -79,12 +81,26 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
             }
         });
 
-
         mBinding.refresh.setOnRefreshListener(this::getData);
 
         mAdapter = new BindingAdapter<>(this, mList, R.layout.item_task);
         mAdapter.setOnItemClickListener(i -> getToken(mList.get(i)));
         mBinding.recycler.setAdapter(mAdapter);
+
+        ItemTouchHelper.SimpleCallback mCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START | ItemTouchHelper.END) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                getToken(mList.get(viewHolder.getAdapterPosition()));
+            }
+        };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mCallback);
+        itemTouchHelper.attachToRecyclerView(mBinding.recycler);
 
         getData();
     }
@@ -112,8 +128,13 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
                 .subscribe(token -> {
-                    getDataLayer().getMjxService().insertOrReplace(task.format(token, mAccount.getPhone()));
-                    Snackbar.make(mBinding.recycler, "添加成功", Snackbar.LENGTH_LONG).show();
+                    long id = getDataLayer().getMjxService().insertOrReplace(task.format(token, mAccount.getPhone()));
+                    Snackbar.make(mBinding.recycler, "任务添加成功", Snackbar.LENGTH_LONG)
+                            .setAction("删除", v -> {
+                                ApplicationComponent.Instance.get().getDaoSession().getTaskDao().deleteByKey(id);
+                                Snackbar.make(mBinding.recycler, "任务已删除", Snackbar.LENGTH_LONG).show();
+                            })
+                            .show();
                     RxBus.get().post(task);
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
     }

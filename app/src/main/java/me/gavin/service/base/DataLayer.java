@@ -41,7 +41,7 @@ public class DataLayer {
 
         Observable<String> getToken(String cookie, long id, String ids);
 
-        void insertOrReplace(Task task);
+        long insertOrReplace(Task task);
 
         Observable<List<Task>> tasks();
 

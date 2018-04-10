@@ -98,8 +98,8 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     }
 
     @Override
-    public void insertOrReplace(Task task) {
-        getDaoSession().getTaskDao().insertOrReplace(task);
+    public long insertOrReplace(Task task) {
+        return getDaoSession().getTaskDao().insertOrReplace(task);
     }
 
     @Override

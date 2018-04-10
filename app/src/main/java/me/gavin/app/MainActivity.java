@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 
@@ -28,6 +30,8 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
     private final List<Task> mList = new ArrayList<>();
     private BindingAdapter<Task> mAdapter;
+    private Task mCXTask;
+    private int mCXposition;
 
     @Override
     protected int getLayoutId() {
@@ -42,13 +46,38 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
         mAdapter = new BindingAdapter<>(this, mList, R.layout.item_task);
         mAdapter.setOnItemClickListener(i -> {
-
+            // TODO: 2018/4/10 点一次抢一次？
         });
         mBinding.recycler.setAdapter(mAdapter);
 
+        ItemTouchHelper.SimpleCallback mCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START | ItemTouchHelper.END) {
+            @Override
+            public boolean onMove(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder, RecyclerView.ViewHolder target) {
+                return false;
+            }
+
+            @Override
+            public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
+                mCXposition = viewHolder.getAdapterPosition();
+                mCXTask = mList.get(mCXposition);
+                mList.remove(mCXTask);
+                mAdapter.notifyItemRemoved(mCXposition);
+                ApplicationComponent.Instance.get().getDaoSession().getTaskDao().delete(mCXTask);
+                Snackbar.make(mBinding.recycler, "任务已删除", Snackbar.LENGTH_LONG)
+                        .setAction("撤销", v -> {
+                            mList.add(mCXposition, mCXTask);
+                            mAdapter.notifyItemInserted(mCXposition);
+                            ApplicationComponent.Instance.get().getDaoSession().getTaskDao().insert(mCXTask);
+                        })
+                        .show();
+            }
+        };
+        ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mCallback);
+        itemTouchHelper.attachToRecyclerView(mBinding.recycler);
+
         mBinding.fab.setOnClickListener(v -> showSelectAccountDialog());
 
-//        initDebugData();
+        // initDebugData();
         getData();
     }
 
@@ -56,7 +85,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     protected void onResume() {
         super.onResume();
         mBinding.fab.show();
-//        getData();
+        getData();
     }
 
     @Override
