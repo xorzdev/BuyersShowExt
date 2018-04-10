@@ -94,6 +94,12 @@ public class TaskService extends Service {
     }
 
     private void initTimer() {
+        if (tasks.isEmpty()) {
+            stopSelf();
+            return;
+        } else {
+            NotificationHelper.notify(this, tasks.size(), tasks.get(0).getTime());
+        }
         Observable.fromIterable(tasks)
                 .filter(task -> task.getTime() - Config.TIME_BEFORE > System.currentTimeMillis())
                 .toSortedList((o1, o2) -> o1.getTime() > o2.getTime() ? 1 : -1)

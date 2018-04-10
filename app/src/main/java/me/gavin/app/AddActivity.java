@@ -1,5 +1,6 @@
 package me.gavin.app;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -84,7 +85,9 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
         mBinding.refresh.setOnRefreshListener(this::getData);
 
         mAdapter = new BindingAdapter<>(this, mList, R.layout.item_task);
-        mAdapter.setOnItemClickListener(i -> getToken(mList.get(i)));
+        mAdapter.setOnItemClickListener(i -> {
+            // TODO: 2018/4/10 详情
+        });
         mBinding.recycler.setAdapter(mAdapter);
 
         ItemTouchHelper.SimpleCallback mCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START | ItemTouchHelper.END) {
@@ -133,9 +136,10 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
                             .setAction("删除", v -> {
                                 ApplicationComponent.Instance.get().getDaoSession().getTaskDao().deleteByKey(id);
                                 Snackbar.make(mBinding.recycler, "任务已删除", Snackbar.LENGTH_LONG).show();
+                                startService(new Intent(this, TaskService.class));
                             })
                             .show();
-                    RxBus.get().post(task);
+                    startService(new Intent(this, TaskService.class));
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
     }
 }

@@ -31,7 +31,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     private final List<Task> mList = new ArrayList<>();
     private BindingAdapter<Task> mAdapter;
     private Task mCXTask;
-    private int mCXposition;
+    private int mCXPosition;
 
     @Override
     protected int getLayoutId() {
@@ -58,18 +58,20 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                mCXposition = viewHolder.getAdapterPosition();
-                mCXTask = mList.get(mCXposition);
+                mCXPosition = viewHolder.getAdapterPosition();
+                mCXTask = mList.get(mCXPosition);
                 mList.remove(mCXTask);
-                mAdapter.notifyItemRemoved(mCXposition);
+                mAdapter.notifyItemRemoved(mCXPosition);
                 ApplicationComponent.Instance.get().getDaoSession().getTaskDao().delete(mCXTask);
                 Snackbar.make(mBinding.recycler, "任务已删除", Snackbar.LENGTH_LONG)
                         .setAction("撤销", v -> {
-                            mList.add(mCXposition, mCXTask);
-                            mAdapter.notifyItemInserted(mCXposition);
+                            mList.add(mCXPosition, mCXTask);
+                            mAdapter.notifyItemInserted(mCXPosition);
                             ApplicationComponent.Instance.get().getDaoSession().getTaskDao().insert(mCXTask);
+                            startService(new Intent(MainActivity.this, TaskService.class));
                         })
                         .show();
+                startService(new Intent(MainActivity.this, TaskService.class));
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mCallback);

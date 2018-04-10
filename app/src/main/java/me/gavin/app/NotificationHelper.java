@@ -54,7 +54,7 @@ public final class NotificationHelper {
                 .setContentTitle(String.format("\"%s\"正在运行", cx.getString(R.string.app_name)))
                 .setContentText("点击即可了解详情或停止应用")
                 .setPriority(Notification.PRIORITY_DEFAULT)
-                .setShowWhen(false)
+                .setShowWhen(true)
                 .setContentIntent(PendingIntent.getActivity(cx, RequestCode.DONT_CARE,
                         new Intent(cx, MainActivity.class)
                                 .addCategory(Intent.CATEGORY_LAUNCHER)
@@ -63,6 +63,24 @@ public final class NotificationHelper {
                         PendingIntent.FLAG_UPDATE_CURRENT))
                 .setDefaults(NotificationCompat.FLAG_FOREGROUND_SERVICE)
                 .build();
+    }
+
+    public static void notify(Context cx, int count, long time) {
+        NotificationManagerCompat.from(cx)
+                .notify(0x250, new Notification.Builder(cx)
+                        .setSmallIcon(R.drawable.vt_circle_default_24dp)
+                        .setContentTitle(String.format("\"%s\"正在运行", cx.getString(R.string.app_name)))
+                        .setContentText(String.format("%s 个任务等待执行，最近的在 %s。", count, TimeOffsetHelper.getOffsetTime(time)))
+                        .setPriority(Notification.PRIORITY_DEFAULT)
+                        .setShowWhen(true)
+                        .setContentIntent(PendingIntent.getActivity(cx, RequestCode.DONT_CARE,
+                                new Intent(cx, MainActivity.class)
+                                        .addCategory(Intent.CATEGORY_LAUNCHER)
+                                        .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
+                                                | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED), // 关键的一步，设置启动模式
+                                PendingIntent.FLAG_UPDATE_CURRENT))
+                        .setDefaults(NotificationCompat.FLAG_FOREGROUND_SERVICE)
+                        .build());
     }
 
     /**
