@@ -182,7 +182,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         binding.tvSure.setOnClickListener(v ->
                 addAccount(binding.etPhone.getText().toString(), binding.etPass.getText().toString(),
                         binding.tvSure, binding.progressBar, dialog));
-        binding.tvCancel.setClickable(true);
+        binding.tvCancel.setOnClickListener(v -> dialog.dismiss());
 
         binding.etPhone.setText("18520776634");
         binding.etPass.setText("921127");
