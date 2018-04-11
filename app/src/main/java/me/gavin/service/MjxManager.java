@@ -8,6 +8,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -108,8 +109,12 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     public Observable<List<Task>> tasks(int time) {
         String sql = " SELECT * FROM TASK LEFT JOIN ACCOUNT ON TASK.PHONE = ACCOUNT.PHONE ";
         if (time == Task.TIME_TODAY) {
-            long millis = System.currentTimeMillis();
-            long start = millis / TimeUnit.DAYS.toMillis(1) * TimeUnit.DAYS.toMillis(1);
+            Calendar cal = Calendar.getInstance();
+            cal.set(Calendar.HOUR_OF_DAY, 0);
+            cal.set(Calendar.MINUTE, 0);
+            cal.set(Calendar.SECOND, 0);
+            cal.set(Calendar.MILLISECOND, 0);
+            long start = cal.getTimeInMillis();
             long end = start + TimeUnit.DAYS.toMillis(1) - 1;
             sql += " WHERE TASK.TIME BETWEEN " + start + " AND " + end;
         } else if (time == Task.TIME_HOPEFUL) {

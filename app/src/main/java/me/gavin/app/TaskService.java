@@ -95,7 +95,7 @@ public class TaskService extends Service {
 
     private void initTimer() {
         Observable.fromIterable(tasks)
-                .filter(task -> task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER)
+                .filter(task -> task.getTime() > System.currentTimeMillis() - Config.TIME_AFTER)
                 .toSortedList((o1, o2) -> o1.getTime() > o2.getTime() ? 1 : -1)
                 .toObservable()
                 .map(ts -> {
