@@ -3,6 +3,7 @@ package me.gavin.service;
 import android.accounts.AccountsException;
 
 import org.greenrobot.greendao.query.QueryBuilder;
+import org.json.JSONException;
 import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -40,7 +41,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .map(ResponseBody::string)
                 .map(Jsoup::parse)
                 .map(document -> {
-                    if ("发生错误".equals(document.head().tagName("title").text())) {
+                    if ("发生错误".equals(document.title())) {
                         throw new IllegalStateException(document
                                 .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
                                 .text());
@@ -167,13 +168,17 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .map(Jsoup::parse)
                 .compose(reLogin(task.getPhone()))
                 .map(document -> {
-                    JSONObject jsonObject = new JSONObject(document.body().text());
-                    if (jsonObject.get("task_id") != null) {
-                        return true; // 成功
+                    try {
+                        JSONObject jsonObject = new JSONObject(document.body().text());
+                        if (jsonObject.get("task_id") != null) {
+                            return true; // 成功
+                        }
+                    } catch (JSONException e) {
+                        // do nothing
                     }
-                    if ("测评详情".equals(document.head().tagName("title").text())) {
+                    if ("测评详情".equals(document.title())) {
                         return true; // 成功?
-                    } else if ("发生错误".equals(document.head().tagName("title").text())) {
+                    } else if ("发生错误".equals(document.title())) {
                         throw new IllegalStateException(document
                                 .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
                                 .text());
@@ -182,7 +187,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
-                            L.e("retryWhen - 非登录过期");
+                            L.e("retryWhen - 非登录过期" + t);
                             task.setCount(task.getCount() + 1);
                             NotificationHelper.notify(App.get(), task, t.getMessage());
                             if (task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER) {
@@ -200,7 +205,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     private ObservableTransformer<Document, Document> reLogin(String phone) {
         return upstream -> upstream
                 .flatMap(document -> {
-                    if ("登录".equals(document.head().tagName("title").text())) {
+                    if ("登录".equals(document.title())) {
                         Account account = getDaoSession().getAccountDao().load(phone);
                         return login(account.getPhone(), account.getPass())
                                 .map(acc -> {
