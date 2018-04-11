@@ -85,6 +85,7 @@ public class TaskService extends Service {
     private void initTimer() {
         Observable.fromIterable(tasks)
                 .filter(task -> task.getTime() > System.currentTimeMillis() - Config.TIME_AFTER)
+                .filter(task -> task.getState() != Task.STATE_SUCCESS)
                 .toSortedList((o1, o2) -> o1.getTime() > o2.getTime() ? 1 : -1)
                 .toObservable()
                 .map(ts -> {
@@ -108,12 +109,19 @@ public class TaskService extends Service {
                             if (t instanceof TimeoutException) {
                                 long time = Long.valueOf(t.getMessage());
                                 L.e("时间未到，重新计时：" + time);
-                                return Observable.just(0).delay(time / 2, TimeUnit.MILLISECONDS);
+                                return Observable.timer(time / 2, TimeUnit.MILLISECONDS);
                             }
                             return Observable.error(new Throwable(t));
                         }))
+//                .retryWhen(throwableObservable -> throwableObservable
+//                        .zipWith(Observable.range(0, 3), (t, i) -> i)
+//                        .flatMap(retryCount -> Observable.timer((long) Math.pow(5, retryCount), TimeUnit.MILLISECONDS)))
+                .repeatWhen(objectObservable -> objectObservable
+                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER, TimeUnit.MILLISECONDS))
                 .flatMap(task -> Observable.fromIterable(tasks))
-                .filter(task -> Math.abs(task.getTime() - System.currentTimeMillis()) < 1000 * 30)
+                .filter(task -> task.getTime() > System.currentTimeMillis() - Config.TIME_AFTER)
+                .filter(task -> task.getTime() < System.currentTimeMillis() + Config.TIME_AFTER)
+                .filter(task -> task.getState() != Task.STATE_SUCCESS)
                 .doOnSubscribe(disposable -> {
                     mCompositeDisposable.add(disposable);
                     if (mTimerDisposable != null) {
