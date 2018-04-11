@@ -49,7 +49,6 @@ public class Task {
 
     public static final int STATE_PENDING = 0; // 等待中
     public static final int STATE_SUCCESS = 1; // 成功
-    public static final int STATE_FAIELD = -1; // 失败
 
     public static final int TIME_TODAY = 0; // 今日
     public static final int TIME_HOPEFUL = 1; // 未结束的
@@ -82,8 +81,6 @@ public class Task {
 
     private String phone;
     private String token;
-    @Transient
-    private String cookie;
 
     private int state; // 0:pending 1:success -1:failed
     private int count;
@@ -248,14 +245,6 @@ public class Task {
 
     public void setPaymentInfo(PaymentInfo paymentInfo) {
         this.paymentInfo = paymentInfo;
-    }
-
-    public String getCookie() {
-        return cookie;
-    }
-
-    public void setCookie(String cookie) {
-        this.cookie = cookie;
     }
 
     public String getTypeExt() {

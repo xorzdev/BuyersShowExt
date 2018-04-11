@@ -19,7 +19,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Function;
 import me.gavin.base.App;
-import me.gavin.base.RxBus;
 import me.gavin.base.RxTransformers;
 import me.gavin.inject.component.ApplicationComponent;
 import me.gavin.service.base.DataLayer;
@@ -53,7 +52,6 @@ public class TaskService extends Service {
         L.e("onCreate - " + this);
         ApplicationComponent.Instance.get().inject(this);
         startForeground(0x250, NotificationHelper.buildNotification(this));
-        subscribe();
     }
 
     @Override
@@ -70,15 +68,6 @@ public class TaskService extends Service {
         if (mCompositeDisposable != null) {
             mCompositeDisposable.dispose();
         }
-    }
-
-    private void subscribe() {
-        RxBus.get().toObservable(Account.class)
-                .doOnSubscribe(mCompositeDisposable::add)
-                .subscribe(arg0 -> initTasks());
-        RxBus.get().toObservable(Task.class)
-                .doOnSubscribe(mCompositeDisposable::add)
-                .subscribe(arg0 -> initTasks());
     }
 
     private void initTasks() {
@@ -152,7 +141,6 @@ public class TaskService extends Service {
                     mDataLayer.get().getMjxService().insertOrReplace(task);
                     NotificationHelper.notify(App.get(), task, "成功");
                 }, t -> {
-                    task.setState(Task.STATE_FAIELD);
                     L.e("任务结束 - 失败 - " + task + " - " + t.toString());
                     mDataLayer.get().getMjxService().insertOrReplace(task);
                     NotificationHelper.notify(App.get(), task, t.getMessage());

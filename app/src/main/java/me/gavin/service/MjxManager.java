@@ -1,13 +1,13 @@
 package me.gavin.service;
 
 import android.accounts.AccountsException;
-import android.database.Cursor;
 
+import org.greenrobot.greendao.query.QueryBuilder;
+import org.json.JSONObject;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
-import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -21,8 +21,6 @@ import me.gavin.app.Config;
 import me.gavin.app.NotificationHelper;
 import me.gavin.app.Task;
 import me.gavin.base.App;
-import me.gavin.base.RxBus;
-import me.gavin.db.dao.AccountDao;
 import me.gavin.db.dao.TaskDao;
 import me.gavin.service.base.BaseManager;
 import me.gavin.service.base.DataLayer;
@@ -71,18 +69,20 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                     avatar = avatar.substring(avatar.indexOf("url(") + 4, avatar.length() - 1);
                     account.setNick(name);
                     account.setAvatar("http://www.maijiaxiuwang.com" + avatar);
+                    getDaoSession().getAccountDao().insertOrReplace(account);
                     return account;
                 });
     }
 
-    @Override
-    public void insertOrReplace(Account account) {
-        getDaoSession().getAccountDao().insertOrReplace(account);
+    private Observable<String> getCookie(String phone) {
+        return Observable.defer(() -> Observable
+                .just(getDaoSession().getAccountDao().load(phone).getCookie()));
     }
 
     @Override
-    public Observable<List<Task>> getWaiting(String cookie, String category) {
-        return getApi().getWaiting(cookie, category)
+    public Observable<List<Task>> getWaiting(String phone, String category) {
+        return getCookie(phone)
+                .flatMap(cookie -> getApi().getWaiting(cookie, category, "waiting"))
                 .map(modelResult -> modelResult.data)
                 .flatMap(Observable::fromIterable)
                 .map(Task::format)
@@ -91,11 +91,12 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     }
 
     @Override
-    public Observable<String> getToken(String cookie, long id, String ids) {
-        return getApi().getDetail(cookie, id, "preview", ids)
+    public Observable<String> getToken(String phone, long id, String ids) {
+        return getCookie(phone)
+                .flatMap(cookie -> getApi().getDetail(cookie, id, "preview", ids))
                 .map(ResponseBody::string)
                 .map(Jsoup::parse)
-                .compose(reLogin(cookie))
+                .compose(reLogin(phone))
                 .map(document -> document.selectFirst("div[id=app]"))
                 .map(element -> element.attr("data-token"));
     }
@@ -107,7 +108,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
 
     @Override
     public Observable<List<Task>> tasks(int time) {
-        String sql = " SELECT * FROM TASK LEFT JOIN ACCOUNT ON TASK.PHONE = ACCOUNT.PHONE ";
+        QueryBuilder<Task> queryBuilder = getDaoSession().getTaskDao().queryBuilder();
         if (time == Task.TIME_TODAY) {
             Calendar cal = Calendar.getInstance();
             cal.set(Calendar.HOUR_OF_DAY, 0);
@@ -116,36 +117,11 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
             cal.set(Calendar.MILLISECOND, 0);
             long start = cal.getTimeInMillis();
             long end = start + TimeUnit.DAYS.toMillis(1) - 1;
-            sql += " WHERE TASK.TIME BETWEEN " + start + " AND " + end;
+            queryBuilder = queryBuilder.where(TaskDao.Properties.Time.between(start, end));
         } else if (time == Task.TIME_HOPEFUL) {
-            sql += " WHERE TASK.TIME > " + (System.currentTimeMillis() - Config.TIME_AFTER);
+            queryBuilder = queryBuilder.where(TaskDao.Properties.Time.gt(System.currentTimeMillis() - Config.TIME_AFTER));
         }
-        Cursor cursor = getDaoSession().getDatabase().rawQuery(sql, null);
-        List<Task> result = new ArrayList<>();
-        while (cursor.moveToNext()) {
-            Task task = new Task(
-                    cursor.getLong(cursor.getColumnIndex(TaskDao.Properties._id.columnName)),
-                    cursor.getLong(cursor.getColumnIndex(TaskDao.Properties.Id.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Ids.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Name.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Cover.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Type.columnName)),
-                    cursor.getDouble(cursor.getColumnIndex(TaskDao.Properties.Price.columnName)),
-                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Hour.columnName)),
-                    cursor.getLong(cursor.getColumnIndex(TaskDao.Properties.Time.columnName)),
-                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Total.columnName)),
-                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Doing.columnName)),
-                    cursor.getDouble(cursor.getColumnIndex(TaskDao.Properties.Reward.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Phone.columnName)),
-                    cursor.getString(cursor.getColumnIndex(TaskDao.Properties.Token.columnName)),
-                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.State.columnName)),
-                    cursor.getInt(cursor.getColumnIndex(TaskDao.Properties.Count.columnName))
-            );
-            String cookie = cursor.getString(cursor.getColumnIndex(AccountDao.Properties.Cookie.columnName));
-            task.setCookie(cookie);
-            result.add(task);
-        }
-        cursor.close();
+        List<Task> result = queryBuilder.list();
         long millis = System.currentTimeMillis() - Config.TIME_AFTER;
         return Observable.just(result)
                 .flatMap(Observable::fromIterable)
@@ -167,26 +143,50 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .toObservable();
     }
 
+    private Observable<String> task2(Task task) {
+        return Observable.defer(() -> {
+            // return Observable.just("{\"task_idd\":11111}");
+            return Math.random() > 0.8 ? Observable.just("{\"task_idd\":11111}")
+                    : Observable.just("<head>\n" +
+                    "  <title>登录</title>\n" +
+                    " </head>\n" +
+                    " <body>\n" +
+                    "  \n" +
+                    " </body>\n" +
+                    "</html>");
+        });
+    }
+
     @Override
     public Observable<Boolean> task(Task task) {
-        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
+        return getCookie(task.getPhone())
+                .flatMap(cookie -> getApi().task(cookie, task.getId(), task.getToken(), task.getIds().split(",")))
                 .map(ResponseBody::string)
 //        return task2(task)
+//                .compose(RxTransformers.log())
                 .map(Jsoup::parse)
-                .compose(reLogin(task.getCookie()))
+                .compose(reLogin(task.getPhone()))
                 .map(document -> {
-                    if ("发生错误".equals(document.head().tagName("title").text())) {
+                    JSONObject jsonObject = new JSONObject(document.body().text());
+                    if (jsonObject.get("task_id") != null) {
+                        return true; // 成功
+                    }
+                    if ("测评详情".equals(document.head().tagName("title").text())) {
+                        return true; // 成功?
+                    } else if ("发生错误".equals(document.head().tagName("title").text())) {
                         throw new IllegalStateException(document
                                 .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
                                 .text());
                     }
-                    return document;
+                    throw new IllegalStateException("未知错误 - " + document);
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
+                            L.e("retryWhen - 非登录过期");
+                            task.setCount(task.getCount() + 1);
                             NotificationHelper.notify(App.get(), task, t.getMessage());
                             if (task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER) {
-                                return Observable.error(new Throwable("尽力了"));
+                                return Observable.error(new Throwable("任务已过期"));
                             }
                             return Observable.just(0).delay(Config.TIME_MIN
                                     + Math.round(Math.random() * (Config.TIME_MAX - Config.TIME_MIN)), TimeUnit.MILLISECONDS);
@@ -194,37 +194,18 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .map(document -> true);
     }
 
-    private Observable<String> task2(Task task) {
-        return Observable.defer(() -> {
-            L.d("<-- " + task);
-            task.setCount(task.getCount() + 1);
-            return Observable.just(0);
-//        }).delay(Math.round(Math.random() * 500), TimeUnit.MILLISECONDS)
-        }).delay(1000, TimeUnit.MILLISECONDS)
-                .map(arg0 -> {
-                    L.d("--> " + task);
-                    return arg0;
-                })
-                .map(arg0 -> "xxx");
-    }
-
     /**
      * 如果 token 过期 - 重新登录并重试
      */
-    private ObservableTransformer<Document, Document> reLogin(String cookie) {
+    private ObservableTransformer<Document, Document> reLogin(String phone) {
         return upstream -> upstream
                 .flatMap(document -> {
                     if ("登录".equals(document.head().tagName("title").text())) {
-                        Account account = getDaoSession()
-                                .getAccountDao()
-                                .queryBuilder()
-                                .where(AccountDao.Properties.Cookie.eq(cookie))
-                                .uniqueOrThrow();
+                        Account account = getDaoSession().getAccountDao().load(phone);
                         return login(account.getPhone(), account.getPass())
-                                .map(account1 -> {
-                                    account.setCookie(account1.getCookie());
+                                .map(acc -> {
+                                    account.setCookie(acc.getCookie());
                                     getDaoSession().getAccountDao().update(account);
-                                    RxBus.get().post(account);
                                     throw new AccountsException("登录失效");
                                 });
                     }
@@ -232,8 +213,9 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
+                            L.e("retryWhen - 登录过期");
                             if (t instanceof AccountsException && "登录失效".equals(t.getMessage())) {
-                                return Observable.just(0).delay(1000, TimeUnit.MILLISECONDS);
+                                return Observable.just(0);
                             }
                             return Observable.error(new Throwable(t));
                         }));

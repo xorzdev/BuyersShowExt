@@ -15,9 +15,11 @@ import android.view.inputmethod.EditorInfo;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.gavin.base.App;
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
 import me.gavin.base.RequestCode;
+import me.gavin.base.RxBus;
 import me.gavin.base.RxTransformers;
 import me.gavin.base.recycler.BindingAdapter;
 import me.gavin.ext.mjx.R;
@@ -26,6 +28,7 @@ import me.gavin.ext.mjx.databinding.DialogAccountBinding;
 import me.gavin.ext.mjx.databinding.DialogLoginBinding;
 import me.gavin.inject.component.ApplicationComponent;
 import me.gavin.util.InputUtil;
+import me.gavin.util.L;
 
 public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
@@ -43,8 +46,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
 
     @Override
     protected void afterCreate(@Nullable Bundle savedInstanceState) {
-        startService(new Intent(this, TaskService.class));
-
+        subscribe();
         mBinding.includeBar.toolbar.inflateMenu(R.menu.menu_main);
         MenuItem menuType = mBinding.includeBar.toolbar.getMenu().findItem(R.id.action_time);
         mBinding.includeBar.toolbar.setOnMenuItemClickListener(item -> {
@@ -74,6 +76,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         mAdapter = new BindingAdapter<>(this, mList, R.layout.item_task);
         mAdapter.setOnItemClickListener(i -> {
             // TODO: 2018/4/10 点一次抢一次？
+            task(mList.get(i));
         });
         mBinding.recycler.setAdapter(mAdapter);
 
@@ -95,10 +98,10 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
                             mList.add(mCXPosition, mCXTask);
                             mAdapter.notifyItemInserted(mCXPosition);
                             ApplicationComponent.Instance.get().getDaoSession().getTaskDao().insert(mCXTask);
-                            startService(new Intent(MainActivity.this, TaskService.class));
+                            RxBus.get().post(mCXTask);
                         })
                         .show();
-                startService(new Intent(MainActivity.this, TaskService.class));
+                RxBus.get().post(mCXTask);
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mCallback);
@@ -115,12 +118,19 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         super.onResume();
         mBinding.fab.show();
         getData();
+        startService(new Intent(this, TaskService.class));
     }
 
     @Override
     protected void onPause() {
         super.onPause();
         mBinding.fab.hide();
+    }
+
+    private void subscribe() {
+        RxBus.get().toObservable(Task.class)
+                .doOnSubscribe(mCompositeDisposable::add)
+                .subscribe(arg0 -> startService(new Intent(this, TaskService.class)));
     }
 
     private void getData() {
@@ -204,7 +214,6 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
                 })
                 .compose(RxTransformers.log())
                 .subscribe(account -> {
-                    getDataLayer().getMjxService().insertOrReplace(account);
                     startActivityForResult(new Intent(this, AddActivity.class)
                             .putExtra(BundleKey.PHONE, phone), RequestCode.TAKE_PHOTO);
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
@@ -224,5 +233,23 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         }
         ApplicationComponent.Instance.get().getDaoSession().getTaskDao().deleteAll();
         ApplicationComponent.Instance.get().getDaoSession().getTaskDao().saveInTx(list);
+    }
+
+    private void task(Task task) {
+        L.e("任务开始 - " + task);
+        getDataLayer().getMjxService()
+                .task(task)
+                .compose(RxTransformers.applySchedulers())
+                .doOnSubscribe(mCompositeDisposable::add)
+                .subscribe(aBoolean -> {
+                    task.setState(Task.STATE_SUCCESS);
+                    L.e("任务结束 - 成功 - " + task);
+                    getDataLayer().getMjxService().insertOrReplace(task);
+                    NotificationHelper.notify(App.get(), task, "成功");
+                }, t -> {
+                    L.e("任务结束 - 失败 - " + task + " - " + t.toString());
+                    getDataLayer().getMjxService().insertOrReplace(task);
+                    NotificationHelper.notify(App.get(), task, t.getMessage());
+                });
     }
 }

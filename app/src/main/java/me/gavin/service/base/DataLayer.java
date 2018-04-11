@@ -35,11 +35,9 @@ public class DataLayer {
     public interface MjxService {
         Observable<Account> login(String phone, String pass);
 
-        void insertOrReplace(Account account);
+        Observable<List<Task>> getWaiting(String phone, String type);
 
-        Observable<List<Task>> getWaiting(String cookie, String type);
-
-        Observable<String> getToken(String cookie, long id, String ids);
+        Observable<String> getToken(String phone, long id, String ids);
 
         long insertOrReplace(Task task);
 

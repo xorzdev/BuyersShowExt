@@ -1,6 +1,5 @@
 package me.gavin.app;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -13,6 +12,7 @@ import java.util.List;
 
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
+import me.gavin.base.RxBus;
 import me.gavin.base.RxTransformers;
 import me.gavin.base.recycler.BindingAdapter;
 import me.gavin.ext.mjx.R;
@@ -45,6 +45,7 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
             return;
         }
 
+        mBinding.includeBar.toolbar.setTitle("待发放");
         mBinding.includeBar.toolbar.setNavigationIcon(R.drawable.vt_arrow_back_black_24dp);
         mBinding.includeBar.toolbar.setNavigationOnClickListener(v -> finish());
         mBinding.includeBar.toolbar.inflateMenu(R.menu.menu_category);
@@ -104,7 +105,7 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
     private void getData() {
         getDataLayer().getMjxService()
-                .getWaiting(mAccount.getCookie(), mCategory)
+                .getWaiting(mAccount.getPhone(), mCategory)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(disposable -> {
                     mCompositeDisposable.add(disposable);
@@ -121,7 +122,7 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
     private void getToken(Task task) {
         getDataLayer().getMjxService()
-                .getToken(mAccount.getCookie(), task.getId(), task.getIds())
+                .getToken(mAccount.getPhone(), task.getId(), task.getIds())
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
                 .subscribe(token -> {
@@ -130,10 +131,10 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
                             .setAction("删除", v -> {
                                 ApplicationComponent.Instance.get().getDaoSession().getTaskDao().deleteByKey(id);
                                 Snackbar.make(mBinding.recycler, "任务已删除", Snackbar.LENGTH_LONG).show();
-                                startService(new Intent(this, TaskService.class));
+                                RxBus.get().post(task);
                             })
                             .show();
-                    startService(new Intent(this, TaskService.class));
+                    RxBus.get().post(task);
                 }, t -> Snackbar.make(mBinding.recycler, t.getMessage(), Snackbar.LENGTH_LONG).show());
     }
 }

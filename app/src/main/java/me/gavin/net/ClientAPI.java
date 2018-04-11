@@ -41,10 +41,11 @@ public interface ClientAPI {
     // buyer/plan/type/A/category/A/stat/waiting 图文
     // buyer/plan/type/A/category/C/stat/waiting 短视频
     // buyer/plan/type/A/category/C/stat/running | stoped 待领取 & 已结束
-    @GET("buyer/plan/type/A/category/{category}/stat/waiting")
+    @GET("buyer/plan/type/A/category/{category}/stat/{state}")
     Observable<ModelResult> getWaiting(
             @Header("Cookie") String cookie,
-            @Path("category") String category);
+            @Path("category") String category,
+            @Path("state") String state);
 
     // buyer/plan/637875?show_type=preview&ids=637875,637880
     @GET("buyer/plan/{id}")

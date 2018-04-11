@@ -5,95 +5,122 @@
 
     <data>
 
+        <import type="me.gavin.app.Task" />
+
+        <import type="android.view.View" />
+
         <variable
             name="item"
             type="me.gavin.app.Task" />
     </data>
 
-    <android.support.constraint.ConstraintLayout
+    <android.support.v7.widget.CardView
         android:id="@+id/item"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_margin="4dp"
         android:foreground="?selectableItemBackground"
-        android:padding="8dp">
+        app:contentPadding="0dp">
 
-        <ImageView
-            android:id="@+id/imageView"
-            android:layout_width="84dp"
-            android:layout_height="84dp"
-            app:imageUrl="@{`http://www.maijiaxiuwang.com` + item.cover}"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="contentDescription"
-            tools:src="@color/colorAccent" />
+        <android.support.constraint.ConstraintLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/imageView"
+                android:layout_width="96dp"
+                android:layout_height="96dp"
+                app:imageUrl="@{`http://www.maijiaxiuwang.com` + item.cover}"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:ignore="contentDescription"
+                tools:src="@color/colorAccent" />
+
+            <TextView
+                android:id="@+id/tvName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:layout_marginTop="4dp"
+                android:text="@{item.name}"
+                android:textAppearance="@style/TextAppearance.AppCompat.Subhead"
+                app:layout_constraintStart_toEndOf="@+id/imageView"
+                app:layout_constraintTop_toTopOf="@+id/imageView"
+                tools:text="名称" />
+
+            <TextView
+                android:id="@+id/tvPrice"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:layout_marginTop="4dp"
+                android:text="@{`价格：¥` + ` ` + item.price}"
+                app:layout_constraintBottom_toBottomOf="@+id/tvName"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvName"
+                tools:text="价格：¥200" />
+
+            <TextView
+                android:id="@+id/tvType"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@{`类型：` + item.typeExt}"
+                app:layout_constraintBottom_toTopOf="@+id/tvTime"
+                app:layout_constraintStart_toEndOf="@+id/imageView"
+                app:layout_constraintTop_toBottomOf="@+id/tvName"
+                tools:text="类型：浏览活动" />
+
+            <TextView
+                android:id="@+id/tvReward"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="8dp"
+                android:text="@{`奖励：` + item.rewardExt}"
+                app:layout_constraintBottom_toBottomOf="@+id/tvType"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="@+id/tvType"
+                tools:text="奖励：40金币" />
+
+            <TextView
+                android:id="@+id/tvTime"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:layout_marginStart="8dp"
+                android:text="@{`时间：` + item.hour + `:00`}"
+                app:layout_constraintBottom_toBottomOf="@+id/imageView"
+                app:layout_constraintStart_toEndOf="@+id/imageView"
+                tools:text="时间：19:00" />
+
+            <TextView
+                android:id="@+id/tvProgress"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                android:layout_marginEnd="8dp"
+                android:text="@{`数量：` + item.doing + `/` + item.total }"
+                app:layout_constraintBottom_toBottomOf="@+id/imageView"
+                app:layout_constraintEnd_toEndOf="parent"
+                tools:text="数量：2/10" />
+
+        </android.support.constraint.ConstraintLayout>
 
         <TextView
-            android:id="@+id/tvName"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:layout_marginTop="4dp"
-            android:text="@{item.name}"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            app:layout_constraintTop_toTopOf="@+id/imageView"
-            tools:text="名称" />
+            android:id="@+id/tvState"
+            android:layout_width="80dp"
+            android:layout_height="36dp"
+            android:background="@android:color/holo_green_light"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:rotation="-45"
+            android:text="成功"
+            android:textColor="@android:color/white"
+            android:textSize="12sp"
+            android:translationX="-28dp"
+            android:translationY="-8dp"
+            android:visibility="@{item.state == Task.STATE_SUCCESS ? View.VISIBLE : View.GONE}" />
 
-        <TextView
-            android:id="@+id/tvPrice"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:layout_marginTop="4dp"
-            android:text="@{`价格：¥` + ` ` + item.price}"
-            app:layout_constraintBottom_toBottomOf="@+id/tvName"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tvName"
-            tools:text="价格：¥200" />
-
-        <TextView
-            android:id="@+id/tvType"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:text="@{`类型：` + item.typeExt}"
-            app:layout_constraintBottom_toTopOf="@+id/tvTime"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            app:layout_constraintTop_toBottomOf="@+id/tvName"
-            tools:text="类型：浏览活动" />
-
-        <TextView
-            android:id="@+id/tvReward"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:text="@{`奖励：` + item.rewardExt}"
-            app:layout_constraintBottom_toBottomOf="@+id/tvType"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/tvType"
-            tools:text="奖励：40金币" />
-
-        <TextView
-            android:id="@+id/tvTime"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:layout_marginStart="8dp"
-            android:text="@{`时间：` + item.hour + `:00`}"
-            app:layout_constraintBottom_toBottomOf="@+id/imageView"
-            app:layout_constraintStart_toEndOf="@+id/imageView"
-            tools:text="时间：19:00" />
-
-        <TextView
-            android:id="@+id/tvProgress"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="4dp"
-            android:layout_marginEnd="8dp"
-            android:text="@{`数量：` + item.doing + `/` + item.total }"
-            app:layout_constraintBottom_toBottomOf="@+id/imageView"
-            app:layout_constraintEnd_toEndOf="parent"
-            tools:text="数量：2/10" />
-
-    </android.support.constraint.ConstraintLayout>
+    </android.support.v7.widget.CardView>
 
 </layout>
 

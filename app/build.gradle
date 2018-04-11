@@ -36,7 +36,7 @@ android {
             versionNameSuffix ".debug"
             buildConfigField "boolean", "LOG_DEBUG", "true"
             buildConfigField "boolean", "API_DEBUG", "true"
-            resValue "string", "app_name", "BuyersShowExt"
+            resValue "string", "app_name", "买断手"
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
@@ -52,7 +52,7 @@ android {
             // manifestPlaceholders = [
             //         fileProvider: ".release"
             // ]
-            resValue "string", "app_name", "BuyersShowExt"
+            resValue "string", "app_name", "买断手"
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
         }
@@ -111,8 +111,6 @@ dependencies {
     implementation 'org.greenrobot:greendao:3.2.2'
 
     implementation 'org.jsoup:jsoup:1.11.2'
-
-    implementation 'com.github.franmontiel:PersistentCookieJar:v1.0.1'
 
     implementation 'com.just.agentweb:agentweb:4.0.2'
 }

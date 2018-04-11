@@ -85,7 +85,7 @@ public final class NotificationHelper {
 
     public static void notify(Context cx, Task task, String msg) {
         NotificationManagerCompat.from(cx)
-                .notify((int) task.getId(), new Notification.Builder(cx)
+                .notify(String.valueOf(task.getId()), 0x251, new Notification.Builder(cx)
                         .setSmallIcon(R.drawable.vt_circle_default_24dp)
                         .setContentTitle(task.getName())
                         .setContentText(String.format("已抢 %s 次：%s", task.getCount(), msg))

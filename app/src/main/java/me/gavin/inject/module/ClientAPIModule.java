@@ -2,9 +2,6 @@ package me.gavin.inject.module;
 
 import android.app.Application;
 
-import com.franmontiel.persistentcookiejar.PersistentCookieJar;
-import com.franmontiel.persistentcookiejar.cache.SetCookieCache;
-import com.franmontiel.persistentcookiejar.persistence.SharedPrefsCookiePersistor;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -111,7 +108,6 @@ public class ClientAPIModule {
                 .addInterceptor(cacheInterceptor)
                 .addNetworkInterceptor(cacheNetworkInterceptor)
                 .cache(cache)
-//                .cookieJar(new PersistentCookieJar(new SetCookieCache(), new SharedPrefsCookiePersistor(application)))
                 .build();
     }
 
