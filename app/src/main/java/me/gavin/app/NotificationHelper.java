@@ -88,7 +88,7 @@ public final class NotificationHelper {
                 .notify(String.valueOf(task.getId()), 0x251, new Notification.Builder(cx)
                         .setSmallIcon(R.drawable.vt_circle_default_24dp)
                         .setContentTitle(task.getName())
-                        .setContentText(String.format("已抢 %s 次：%s", task.getCount(), msg))
+                        .setContentText(String.format("已执行 %s 次：%s", task.getCount(), msg))
                         .setPriority(Notification.PRIORITY_DEFAULT)
                         .setShowWhen(true)
                         .setContentIntent(PendingIntent.getActivity(cx, RequestCode.DONT_CARE,

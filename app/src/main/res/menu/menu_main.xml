@@ -3,7 +3,7 @@
 
     <item
         android:id="@+id/action_time"
-        android:title="今日"
+        android:title="未结束"
         app:showAsAction="ifRoom">
 
         <menu>

@@ -191,7 +191,7 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                             task.setCount(task.getCount() + 1);
                             NotificationHelper.notify(App.get(), task, t.getMessage());
                             if (task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER) {
-                                return Observable.error(new Throwable("任务已过期"));
+                                return Observable.error(new Throwable(t.getMessage()));
                             }
                             return Observable.just(0).delay(Config.TIME_MIN
                                     + Math.round(Math.random() * (Config.TIME_MAX - Config.TIME_MIN)), TimeUnit.MILLISECONDS);

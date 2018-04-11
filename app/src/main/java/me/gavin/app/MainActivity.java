@@ -37,7 +37,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
     private Task mCXTask;
     private int mCXPosition;
 
-    private int mTime = Task.TIME_TODAY;
+    private int mTime = Task.TIME_HOPEFUL;
 
     @Override
     protected int getLayoutId() {
