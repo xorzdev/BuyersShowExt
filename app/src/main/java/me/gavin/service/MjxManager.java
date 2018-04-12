@@ -36,7 +36,7 @@ import okhttp3.ResponseBody;
 public class MjxManager extends BaseManager implements DataLayer.MjxService {
 
     @Override
-    public Observable<Account> login(String phone, String pass) {
+    public Observable<String> getCookie(String phone, String pass) {
         return getApi().login(phone, pass)
                 .map(ResponseBody::string)
                 .map(Jsoup::parse)
@@ -49,7 +49,12 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                     return document;
                 })
                 .map(Document::body)
-                .map(Element::text)
+                .map(Element::text);
+    }
+
+    @Override
+    public Observable<Account> login(String phone, String pass) {
+        return getCookie(phone, pass)
                 .map(cookie -> {
                     Account account = new Account();
                     account.setPhone(phone);
@@ -159,9 +164,34 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
     }
 
     @Override
+    public Observable<Boolean> taskOnce(Task task) {
+        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
+                .map(ResponseBody::string)
+                .map(Jsoup::parse)
+                .map(document -> {
+                    try {
+                        JSONObject jsonObject = new JSONObject(document.body().text());
+                        if (jsonObject.get("task_id") != null) {
+                            return true; // 成功
+                        }
+                    } catch (JSONException e) {
+                        // do nothing
+                    }
+                    if ("测评详情".equals(document.title())) {
+                        return true; // 成功?
+                    } else if ("发生错误".equals(document.title())) {
+                        throw new IllegalStateException(document
+                                .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
+                                .text());
+                    }
+                    throw new IllegalStateException("未知错误 - " + document);
+                })
+                .map(document -> true);
+    }
+
+    @Override
     public Observable<Boolean> task(Task task) {
-        return getCookie(task.getPhone())
-                .flatMap(cookie -> getApi().task(cookie, task.getId(), task.getToken(), task.getIds().split(",")))
+        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
                 .map(ResponseBody::string)
 //        return task2(task)
 //                .compose(RxTransformers.log())

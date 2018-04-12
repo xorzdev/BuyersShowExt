@@ -33,6 +33,8 @@ public class DataLayer {
     }
 
     public interface MjxService {
+        Observable<String> getCookie(String phone, String pass);
+
         Observable<Account> login(String phone, String pass);
 
         Observable<List<Task>> getWaiting(String phone, String type);
@@ -43,6 +45,8 @@ public class DataLayer {
 
         Observable<List<Task>> tasks(int time);
 
+        Observable<Boolean> taskOnce(Task task);
+        
         Observable<Boolean> task(Task task);
     }
 

@@ -81,14 +81,15 @@ public class Task {
 
     private String phone;
     private String token;
+    private String cookie;
 
     private int state; // 0:pending 1:success -1:failed
     private int count;
 
-    @Generated(hash = 1723598908)
+    @Generated(hash = 604103178)
     public Task(Long _id, long id, String ids, String name, String cover, String type,
                 double price, int hour, long time, int total, int doing, double reward,
-                String phone, String token, int state, int count) {
+                String phone, String token, String cookie, int state, int count) {
         this._id = _id;
         this.id = id;
         this.ids = ids;
@@ -103,6 +104,7 @@ public class Task {
         this.reward = reward;
         this.phone = phone;
         this.token = token;
+        this.cookie = cookie;
         this.state = state;
         this.count = count;
     }
@@ -223,6 +225,14 @@ public class Task {
         this.token = token;
     }
 
+    public String getCookie() {
+        return this.cookie;
+    }
+
+    public void setCookie(String cookie) {
+        this.cookie = cookie;
+    }
+
     public int getState() {
         return this.state;
     }
@@ -279,8 +289,9 @@ public class Task {
         return this;
     }
 
-    public Task format(String token, String phone) {
+    public Task format(String token, String cookie, String phone) {
         this.token = token;
+        this.cookie = cookie;
         this.phone = phone;
         return this;
     }

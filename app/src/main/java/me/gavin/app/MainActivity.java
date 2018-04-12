@@ -74,10 +74,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         mBinding.refresh.setOnRefreshListener(this::getData);
 
         mAdapter = new BindingAdapter<>(this, mList, R.layout.item_task);
-        mAdapter.setOnItemClickListener(i -> {
-            // TODO: 2018/4/10 点一次抢一次？
-            task(mList.get(i));
-        });
+        mAdapter.setOnItemClickListener(i -> taskOnce(mList.get(i)));
         mBinding.recycler.setAdapter(mAdapter);
 
         ItemTouchHelper.SimpleCallback mCallback = new ItemTouchHelper.SimpleCallback(0, ItemTouchHelper.START | ItemTouchHelper.END) {
@@ -235,10 +232,10 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
         ApplicationComponent.Instance.get().getDaoSession().getTaskDao().saveInTx(list);
     }
 
-    private void task(Task task) {
+    private void taskOnce(Task task) {
         L.e("任务开始 - " + task);
         getDataLayer().getMjxService()
-                .task(task)
+                .taskOnce(task)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
                 .subscribe(aBoolean -> {

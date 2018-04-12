@@ -10,6 +10,7 @@ import android.view.MenuItem;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
 import me.gavin.base.BindingActivity;
 import me.gavin.base.BundleKey;
 import me.gavin.base.RxBus;
@@ -121,12 +122,14 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
     }
 
     private void getToken(Task task) {
-        getDataLayer().getMjxService()
-                .getToken(mAccount.getPhone(), task.getId(), task.getIds())
+        Observable.zip(
+                getDataLayer().getMjxService().getToken(mAccount.getPhone(), task.getId(), task.getIds()),
+                getDataLayer().getMjxService().getCookie(mAccount.getPhone(), mAccount.getPass()),
+                (token, cookie) -> new String[]{token, cookie})
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
-                .subscribe(token -> {
-                    long id = getDataLayer().getMjxService().insertOrReplace(task.format(token, mAccount.getPhone()));
+                .subscribe(ss -> {
+                    long id = getDataLayer().getMjxService().insertOrReplace(task.format(ss[0], ss[1], mAccount.getPhone()));
                     Snackbar.make(mBinding.recycler, "任务添加成功", Snackbar.LENGTH_LONG)
                             .setAction("删除", v -> {
                                 ApplicationComponent.Instance.get().getDaoSession().getTaskDao().deleteByKey(id);
