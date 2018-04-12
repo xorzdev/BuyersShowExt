@@ -109,7 +109,7 @@ public class TaskService extends Service {
                             if (t instanceof TimeoutException) {
                                 long time = Long.valueOf(t.getMessage());
                                 L.e("时间未到，重新计时：" + time);
-                                return Observable.timer(time / 2, TimeUnit.MILLISECONDS);
+                                return Observable.timer(Math.min(1000 * 60 * 5, time / 2), TimeUnit.MILLISECONDS);
                             }
                             return Observable.error(new Throwable(t));
                         }))
@@ -117,7 +117,7 @@ public class TaskService extends Service {
 //                        .zipWith(Observable.range(0, 3), (t, i) -> i)
 //                        .flatMap(retryCount -> Observable.timer((long) Math.pow(5, retryCount), TimeUnit.MILLISECONDS)))
                 .repeatWhen(objectObservable -> objectObservable
-                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER, TimeUnit.MILLISECONDS))
+                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER + 1000 * 60, TimeUnit.MILLISECONDS))
                 .flatMap(task -> Observable.fromIterable(tasks))
                 .filter(task -> task.getTime() > System.currentTimeMillis() - Config.TIME_AFTER)
                 .filter(task -> task.getTime() < System.currentTimeMillis() + Config.TIME_AFTER)
@@ -141,8 +141,6 @@ public class TaskService extends Service {
                 .task(task)
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
-                .doOnComplete(this::initTimer)
-                .doOnError(t -> initTimer())
                 .subscribe(aBoolean -> {
                     task.setState(Task.STATE_SUCCESS);
                     L.e("任务结束 - 成功 - " + task);
