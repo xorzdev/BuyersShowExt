@@ -1,6 +1,5 @@
 package me.gavin.app;
 
-import android.app.Notification;
 import android.app.Service;
 import android.content.Intent;
 import android.os.IBinder;
@@ -53,7 +52,9 @@ public class TaskService extends Service {
         super.onCreate();
         L.e("onCreate - " + this);
         ApplicationComponent.Instance.get().inject(this);
-        startForeground(0x250, new Notification());
+        startForeground(0x250, NotificationHelper
+                .newNotificationBuilder(this, NotificationHelper.CHANNEL_RUNNING)
+                .build());
     }
 
     @Override
