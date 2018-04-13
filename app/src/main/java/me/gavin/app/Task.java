@@ -41,7 +41,7 @@ import java.util.Calendar;
  * @author gavin.xiong 2018/4/8.
  */
 @Entity
-public class Task {
+public class Task implements Cloneable {
 
     public static final String TYPE_YJ = "A"; // 金币
     public static final String TYPE_DH = "D"; // 获得
@@ -294,6 +294,11 @@ public class Task {
         this.cookie = cookie;
         this.phone = phone;
         return this;
+    }
+
+    @Override
+    protected Task clone() throws CloneNotSupportedException {
+        return (Task) super.clone();
     }
 
     private long getTime(int hour) {

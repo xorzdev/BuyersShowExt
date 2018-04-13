@@ -94,8 +94,12 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
 
             @Override
             public void onSwiped(RecyclerView.ViewHolder viewHolder, int direction) {
-                mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
-                getToken(mList.get(viewHolder.getAdapterPosition()));
+                try {
+                    mAdapter.notifyItemChanged(viewHolder.getAdapterPosition());
+                    getToken(mList.get(viewHolder.getAdapterPosition()).clone());
+                } catch (Exception e) {
+                    Snackbar.make(mBinding.recycler, e.getMessage(), Snackbar.LENGTH_LONG).show();
+                }
             }
         };
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(mCallback);
@@ -125,7 +129,7 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
         Observable<String> tokenObservable = getDataLayer()
                 .getMjxService()
                 .getToken(mAccount.getPhone(), task.getId(), task.getIds());
-                // .getTokenWithCheckTemp(mAccount.getPhone(), task.getId(), task.getIds());
+        // .getTokenWithCheckTemp(mAccount.getPhone(), task.getId(), task.getIds());
         Observable<String> cookieObservable = getDataLayer()
                 .getMjxService()
                 .getCookie(mAccount.getPhone(), mAccount.getPass());

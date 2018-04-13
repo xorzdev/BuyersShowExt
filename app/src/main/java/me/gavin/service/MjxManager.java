@@ -167,7 +167,11 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
 
     @Override
     public Observable<Boolean> taskOnce(Task task) {
-        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
+        return Observable.defer(() -> {
+            task.setCount(task.getCount() + 1);
+            getDaoSession().getTaskDao().update(task);
+            return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","));
+        })
                 .map(ResponseBody::string)
                 .map(Jsoup::parse)
                 .map(document -> {
@@ -196,7 +200,6 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
                             L.e("retryWhen - 非登录过期" + t);
-                            task.setCount(task.getCount() + 1);
                             NotificationHelper.notify(App.get(), task, t.getMessage());
                             if (task.getTime() < System.currentTimeMillis() - Config.TIME_AFTER) {
                                 return Observable.error(new Throwable(t.getMessage()));
