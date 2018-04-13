@@ -19,8 +19,10 @@ import io.reactivex.ObservableTransformer;
 import io.reactivex.functions.Function;
 import me.gavin.app.Account;
 import me.gavin.app.Config;
+import me.gavin.app.ModelResult;
 import me.gavin.app.NotificationHelper;
 import me.gavin.app.Task;
+import me.gavin.app.Temp;
 import me.gavin.base.App;
 import me.gavin.db.dao.TaskDao;
 import me.gavin.service.base.BaseManager;
@@ -65,6 +67,11 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .flatMap(this::getAccount);
     }
 
+    private Observable<String> getCookie(String phone) {
+        return Observable.defer(() -> Observable
+                .just(getDaoSession().getAccountDao().load(phone).getCookie()));
+    }
+
     private Observable<Account> getAccount(Account account) {
         return getApi().getAccount(account.getCookie())
                 .map(ResponseBody::string)
@@ -80,15 +87,13 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 });
     }
 
-    private Observable<String> getCookie(String phone) {
-        return Observable.defer(() -> Observable
-                .just(getDaoSession().getAccountDao().load(phone).getCookie()));
-    }
-
     @Override
     public Observable<List<Task>> getWaiting(String phone, String category) {
         return getCookie(phone)
                 .flatMap(cookie -> getApi().getWaiting(cookie, category, "waiting"))
+                .map(ResponseBody::string)
+                .compose(reLogin(phone))
+                .map(json -> getGson().fromJson(json, ModelResult.class))
                 .map(modelResult -> modelResult.data)
                 .flatMap(Observable::fromIterable)
                 .map(Task::format)
@@ -101,10 +106,21 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
         return getCookie(phone)
                 .flatMap(cookie -> getApi().getDetail(cookie, id, "preview", ids))
                 .map(ResponseBody::string)
-                .map(Jsoup::parse)
                 .compose(reLogin(phone))
+                .map(Jsoup::parse)
                 .map(document -> document.selectFirst("div[id=app]"))
                 .map(element -> element.attr("data-token"));
+    }
+
+    @Override
+    public Observable<String> getTokenWithCheckTemp(String phone, long id, String ids) {
+        return checkTemp(phone)
+                .flatMap(valid -> {
+                    if (valid) {
+                        return getToken(phone, id, ids);
+                    }
+                    throw new AccountsException("软件试用过期，无法添加任务");
+                });
     }
 
     @Override
@@ -149,20 +165,6 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                 .toObservable();
     }
 
-    private Observable<String> task2(Task task) {
-        return Observable.defer(() -> {
-            // return Observable.just("{\"task_idd\":11111}");
-            return Math.random() > 0.8 ? Observable.just("{\"task_idd\":11111}")
-                    : Observable.just("<head>\n" +
-                    "  <title>登录</title>\n" +
-                    " </head>\n" +
-                    " <body>\n" +
-                    "  \n" +
-                    " </body>\n" +
-                    "</html>");
-        });
-    }
-
     @Override
     public Observable<Boolean> taskOnce(Task task) {
         return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
@@ -185,36 +187,12 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                                 .text());
                     }
                     throw new IllegalStateException("未知错误 - " + document);
-                })
-                .map(document -> true);
+                });
     }
 
     @Override
     public Observable<Boolean> task(Task task) {
-        return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","))
-                .map(ResponseBody::string)
-//        return task2(task)
-//                .compose(RxTransformers.log())
-                .map(Jsoup::parse)
-                .compose(reLogin(task.getPhone()))
-                .map(document -> {
-                    try {
-                        JSONObject jsonObject = new JSONObject(document.body().text());
-                        if (jsonObject.get("task_id") != null) {
-                            return true; // 成功
-                        }
-                    } catch (JSONException e) {
-                        // do nothing
-                    }
-                    if ("测评详情".equals(document.title())) {
-                        return true; // 成功?
-                    } else if ("发生错误".equals(document.title())) {
-                        throw new IllegalStateException(document
-                                .selectFirst("div[class=error_info] div[class=error_content]  div[class=warning_text]")
-                                .text());
-                    }
-                    throw new IllegalStateException("未知错误 - " + document);
-                })
+        return taskOnce(task)
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
                             L.e("retryWhen - 非登录过期" + t);
@@ -225,26 +203,25 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                             }
                             return Observable.just(0).delay(Config.TIME_MIN
                                     + Math.round(Math.random() * (Config.TIME_MAX - Config.TIME_MIN)), TimeUnit.MILLISECONDS);
-                        }))
-                .map(document -> true);
+                        }));
     }
 
     /**
      * 如果 token 过期 - 重新登录并重试
      */
-    private ObservableTransformer<Document, Document> reLogin(String phone) {
+    private ObservableTransformer<String, String> reLogin(String phone) {
         return upstream -> upstream
-                .flatMap(document -> {
-                    if ("登录".equals(document.title())) {
+                .flatMap(s -> {
+                    if ("登录".equals(Jsoup.parse(s).title())) {
                         Account account = getDaoSession().getAccountDao().load(phone);
-                        return login(account.getPhone(), account.getPass())
-                                .map(acc -> {
-                                    account.setCookie(acc.getCookie());
+                        return getCookie(account.getPhone(), account.getPass())
+                                .map(cookie -> {
+                                    account.setCookie(cookie);
                                     getDaoSession().getAccountDao().update(account);
                                     throw new AccountsException("登录失效");
                                 });
                     }
-                    return Observable.just(document);
+                    return Observable.just(s);
                 })
                 .retryWhen(throwableObservable -> throwableObservable
                         .flatMap((Function<Throwable, ObservableSource<?>>) t -> {
@@ -254,5 +231,19 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
                             }
                             return Observable.error(new Throwable(t));
                         }));
+    }
+
+    @Override
+    public Observable<Boolean> checkTemp(String phone) {
+        return getApi().getTemps()
+                .map(temps -> {
+                    L.e(temps);
+                    for (Temp t : temps) {
+                        if (phone.equals(t.getPhone())) {
+                            return t.isValid();
+                        }
+                    }
+                    return false;
+                });
     }
 }

@@ -41,6 +41,8 @@ public class DataLayer {
 
         Observable<String> getToken(String phone, long id, String ids);
 
+        Observable<String> getTokenWithCheckTemp(String phone, long id, String ids);
+
         long insertOrReplace(Task task);
 
         Observable<List<Task>> tasks(int time);
@@ -48,6 +50,8 @@ public class DataLayer {
         Observable<Boolean> taskOnce(Task task);
         
         Observable<Boolean> task(Task task);
+
+        Observable<Boolean> checkTemp(String phone);
     }
 
     public interface SettingService {

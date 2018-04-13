@@ -122,10 +122,14 @@ public class AddActivity extends BindingActivity<ActivityMainBinding> {
     }
 
     private void getToken(Task task) {
-        Observable.zip(
-                getDataLayer().getMjxService().getToken(mAccount.getPhone(), task.getId(), task.getIds()),
-                getDataLayer().getMjxService().getCookie(mAccount.getPhone(), mAccount.getPass()),
-                (token, cookie) -> new String[]{token, cookie})
+        Observable<String> tokenObservable = getDataLayer()
+                .getMjxService()
+                .getToken(mAccount.getPhone(), task.getId(), task.getIds());
+                // .getTokenWithCheckTemp(mAccount.getPhone(), task.getId(), task.getIds());
+        Observable<String> cookieObservable = getDataLayer()
+                .getMjxService()
+                .getCookie(mAccount.getPhone(), mAccount.getPass());
+        Observable.zip(tokenObservable, cookieObservable, (token, cookie) -> new String[]{token, cookie})
                 .compose(RxTransformers.applySchedulers())
                 .doOnSubscribe(mCompositeDisposable::add)
                 .subscribe(ss -> {

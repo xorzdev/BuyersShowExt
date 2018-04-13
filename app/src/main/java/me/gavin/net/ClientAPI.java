@@ -2,8 +2,10 @@ package me.gavin.net;
 
 import com.google.gson.JsonArray;
 
+import java.util.List;
+
 import io.reactivex.Observable;
-import me.gavin.app.ModelResult;
+import me.gavin.app.Temp;
 import okhttp3.ResponseBody;
 import retrofit2.http.Field;
 import retrofit2.http.FormUrlEncoded;
@@ -42,7 +44,7 @@ public interface ClientAPI {
     // buyer/plan/type/A/category/C/stat/waiting 短视频
     // buyer/plan/type/A/category/C/stat/running | stoped 待领取 & 已结束
     @GET("buyer/plan/type/A/category/{category}/stat/{state}")
-    Observable<ModelResult> getWaiting(
+    Observable<ResponseBody> getWaiting(
             @Header("Cookie") String cookie,
             @Path("category") String category,
             @Path("state") String state);
@@ -62,6 +64,9 @@ public interface ClientAPI {
             @Field("plan_id") long id,
             @Field("_token") String token,
             @Field("plan_ids[]") String... ids);
+
+    @GET("https://raw.githubusercontent.com/gavinxxxxxx/BuyersShowExt/master/json/temps.json")
+    Observable<List<Temp>> getTemps();
 
 
     /* **************************************************************************** *

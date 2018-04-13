@@ -190,9 +190,6 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
                 addAccount(binding.etPhone.getText().toString(), binding.etPass.getText().toString(),
                         binding.tvSure, binding.progressBar, dialog));
         binding.tvCancel.setOnClickListener(v -> dialog.dismiss());
-
-        binding.etPhone.setText("18520776634");
-        binding.etPass.setText("921127");
     }
 
     private void addAccount(String phone, String pass, View v, View progress, Dialog dialog) {

@@ -39,6 +39,7 @@ public class TaskService extends Service {
     private final List<Task> tasks = new ArrayList<>();
 
     private Disposable mTimerDisposable;
+    private CompositeDisposable mTaskCompositeDisposable;
 
     @Nullable
     @Override
@@ -100,6 +101,11 @@ public class TaskService extends Service {
                     if (time > 0) {
                         throw new TimeoutException(String.valueOf(time));
                     }
+                    if (mTaskCompositeDisposable != null) {
+                        mTaskCompositeDisposable.dispose();
+                    }
+                    mTaskCompositeDisposable = new CompositeDisposable();
+                    mCompositeDisposable.add(mTaskCompositeDisposable);
                     return task;
                 })
                 .retryWhen(throwableObservable -> throwableObservable
@@ -114,12 +120,6 @@ public class TaskService extends Service {
 //                .retryWhen(throwableObservable -> throwableObservable
 //                        .zipWith(Observable.range(0, 3), (t, i) -> i)
 //                        .flatMap(retryCount -> Observable.timer((long) Math.pow(5, retryCount), TimeUnit.MILLISECONDS)))
-                .repeatWhen(objectObservable -> objectObservable
-                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER + 1000 * 60, TimeUnit.MILLISECONDS)
-                        .flatMap(arg0 -> {
-                            initTasks();
-                            return Observable.empty();
-                        }))
                 .flatMap(task -> Observable.fromIterable(tasks))
                 .filter(task -> task.getTime() > System.currentTimeMillis() - Config.TIME_AFTER)
                 .filter(task -> task.getTime() < System.currentTimeMillis() + Config.TIME_AFTER)
@@ -131,6 +131,12 @@ public class TaskService extends Service {
                     }
                     mTimerDisposable = disposable;
                 })
+                .repeatWhen(objectObservable -> objectObservable
+                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER + 1000 * 60, TimeUnit.MILLISECONDS)
+                        .flatMap(arg0 -> {
+                            initTasks();
+                            return Observable.empty();
+                        }))
                 .subscribe(this::task, t -> {
                     L.e("stopSelf - " + t);
                     stopSelf();
@@ -142,7 +148,7 @@ public class TaskService extends Service {
         mDataLayer.get().getMjxService()
                 .task(task)
                 .compose(RxTransformers.applySchedulers())
-                .doOnSubscribe(mCompositeDisposable::add)
+                .doOnSubscribe(mTaskCompositeDisposable::add)
                 .subscribe(aBoolean -> {
                     task.setState(Task.STATE_SUCCESS);
                     L.e("任务结束 - 成功 - " + task);
