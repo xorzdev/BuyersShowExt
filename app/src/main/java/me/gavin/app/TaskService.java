@@ -91,12 +91,10 @@ public class TaskService extends Service {
                 .map(ts -> {
                     if (ts.isEmpty()) {
                         throw new NullPointerException("暂无任务");
-                    } else {
-                        NotificationHelper.notify(this, ts.size(), tasks.get(0).getTime());
                     }
-                    return ts;
+                    NotificationHelper.notify(this, ts.size(), ts.get(0).getTime());
+                    return ts.get(0);
                 })
-                .map(ts -> ts.get(0))
                 .map(task -> {
                     long time = task.getTime() - Config.TIME_BEFORE - System.currentTimeMillis();
                     if (time > 0) {
@@ -117,7 +115,11 @@ public class TaskService extends Service {
 //                        .zipWith(Observable.range(0, 3), (t, i) -> i)
 //                        .flatMap(retryCount -> Observable.timer((long) Math.pow(5, retryCount), TimeUnit.MILLISECONDS)))
                 .repeatWhen(objectObservable -> objectObservable
-                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER + 1000 * 60, TimeUnit.MILLISECONDS))
+                        .delay(Config.TIME_BEFORE + Config.TIME_AFTER + 1000 * 60, TimeUnit.MILLISECONDS)
+                        .flatMap(arg0 -> {
+                            initTasks();
+                            return Observable.empty();
+                        }))
                 .flatMap(task -> Observable.fromIterable(tasks))
                 .filter(task -> task.getTime() > System.currentTimeMillis() - Config.TIME_AFTER)
                 .filter(task -> task.getTime() < System.currentTimeMillis() + Config.TIME_AFTER)
