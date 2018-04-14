@@ -42,13 +42,13 @@ public final class NotificationHelper {
     private static void createChannel(Context context, String channelId) {
         NotificationChannel channel = null;
         if (CHANNEL_RUNNING.equals(channelId)) {
-            channel = new NotificationChannel(CHANNEL_RUNNING, "运行中", NotificationManager.IMPORTANCE_LOW);
+            channel = new NotificationChannel(CHANNEL_RUNNING, "运行中", NotificationManager.IMPORTANCE_MIN);
             channel.setLockscreenVisibility(Notification.VISIBILITY_SECRET);//设置在锁屏界面上显示这条通知
             channel.enableLights(false);
             channel.setShowBadge(false);
             channel.enableVibration(false);
         } else if (CHANNEL_TASK.equals(channelId)) {
-            channel = new NotificationChannel(CHANNEL_TASK, "任务提示", NotificationManager.IMPORTANCE_LOW);
+            channel = new NotificationChannel(CHANNEL_TASK, "任务提示", NotificationManager.IMPORTANCE_MIN);
             channel.enableLights(false);
             channel.setShowBadge(false);
             channel.enableVibration(false);
