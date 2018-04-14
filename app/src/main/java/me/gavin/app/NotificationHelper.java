@@ -116,7 +116,7 @@ public final class NotificationHelper {
                                         .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK
                                                 | Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED), // 关键的一步，设置启动模式
                                 PendingIntent.FLAG_UPDATE_CURRENT))
-                        .setDefaults(NotificationCompat.FLAG_FOREGROUND_SERVICE)
+                        .setDefaults(NotificationCompat.DEFAULT_ALL)
                         .build());
     }
 }
