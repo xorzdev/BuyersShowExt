@@ -170,7 +170,8 @@ public class MjxManager extends BaseManager implements DataLayer.MjxService {
         return Observable.defer(() -> {
             task.setCount(task.getCount() + 1);
             getDaoSession().getTaskDao().update(task);
-            return getApi().task(task.getCookie(), task.getId(), task.getToken(), task.getIds().split(","));
+            String referer = String.format("http: //www.maijiaxiuwang.com/buyer/plan/%s?show_type=now&ids=%s", task.getId(), task.getIds());
+            return getApi().task(task.getCookie(), referer, task.getId(), task.getToken(), task.getIds().split(","));
         })
                 .map(ResponseBody::string)
                 .map(Jsoup::parse)

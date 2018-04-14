@@ -239,7 +239,7 @@ public class MainActivity extends BindingActivity<ActivityMainBinding> {
                     task.setState(Task.STATE_SUCCESS);
                     L.e("任务结束 - 成功 - " + task);
                     getDataLayer().getMjxService().insertOrReplace(task);
-                    NotificationHelper.notify(App.get(), task, "成功");
+                    NotificationHelper.notify(App.get(), task, true);
                 }, t -> {
                     L.e("任务结束 - 失败 - " + task + " - " + t.toString());
                     getDataLayer().getMjxService().insertOrReplace(task);

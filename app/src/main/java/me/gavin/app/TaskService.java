@@ -155,11 +155,11 @@ public class TaskService extends Service {
                     task.setState(Task.STATE_SUCCESS);
                     L.e("任务结束 - 成功 - " + task);
                     mDataLayer.get().getMjxService().insertOrReplace(task);
-                    NotificationHelper.notify(App.get(), task, "成功");
+                    NotificationHelper.notify(App.get(), task, true);
                 }, t -> {
                     L.e("任务结束 - 失败 - " + task + " - " + t.toString());
                     mDataLayer.get().getMjxService().insertOrReplace(task);
-                    NotificationHelper.notify(App.get(), task, t.getMessage());
+                    NotificationHelper.notify(App.get(), task, false);
                 });
     }
 }

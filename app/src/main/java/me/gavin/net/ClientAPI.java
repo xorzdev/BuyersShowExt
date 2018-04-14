@@ -57,10 +57,26 @@ public interface ClientAPI {
             @Query("show_type") String type,
             @Query("ids") String ids);
 
+    @Headers({
+            "Accept: application/json, text/javascript, */*; q=0.01",
+//            "Accept-Encoding: gzip, deflate",
+            "Accept-Language: zh-CN,zh;q=0.9",
+//            "Content-Length: 77",
+            "Content-Type: application/x-www-form-urlencoded; charset=UTF-8",
+//            "Cookie: QINGCLOUDELB=1987b7501e9d73a323375db9113157e3782e7375b929dfff96a84f49768ce246; koa.sid=qyjc1uQqRN8PjpIGojRb0IIRcLs-AfEr_Lmvnk_k1sQ; koa.sid.sig=yx_7fugaEI8C1IXJGGrFHbmUy7s; Hm_lvt_f38b9a4f588b4bac6fed0bbfeb2d0d60=1523422758,1523432707,1523518422,1523673266; Hm_lpvt_f38b9a4f588b4bac6fed0bbfeb2d0d60=1523673282",
+            "Host: www.maijiaxiuwang.com",
+            "Origin: http: //www.maijiaxiuwang.com",
+            "Proxy-Connection: keep-alive",
+//            "Referer: http: //www.maijiaxiuwang.com/buyer/plan/451101?show_type=now&ids=451101,451285",
+//            "User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/62.0.3202.75 Safari/537.36",
+            "User-Agent: Mozilla/5.0 (Linux; Android 5.0.1; GT-I9502 Build/LRX22C; wv) AppleWebKit/537.36 (KHTML, like Gecko) Version/4.0 Chrome/43.0.2357.121 Mobile Safari/537.36 MicroMessenger/6.1.0.78_r1129455.543 NetType/WIFI",
+            "X-Requested-With: XMLHttpRequest"
+    })
     @FormUrlEncoded
     @PUT("buyer/task")
     Observable<ResponseBody> task(
             @Header("Cookie") String cookie,
+            @Header("Referer") String referer,
             @Field("plan_id") long id,
             @Field("_token") String token,
             @Field("plan_ids[]") String... ids);
