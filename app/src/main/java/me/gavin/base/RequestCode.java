@@ -8,7 +8,7 @@ package me.gavin.base;
 public class RequestCode {
 
     /**
-     * 无所谓
+     * ╮(╯▽╰)╭
      */
     public static final int DONT_CARE = 0X100;
     /**
